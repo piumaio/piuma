@@ -16,6 +16,9 @@ import (
     "strconv"
 )
 
+var img_path ="img/"
+var original_img_path ="img/original/"
+
 //dimensions, quality, url
 func Recognize(data [3]string) string{
     //Controllo se ho fatto questa modifica
@@ -23,19 +26,19 @@ func Recognize(data [3]string) string{
     done_check[0],done_check[1]=RequestDone(data)
     hf := done_check[0]
     if done_check[1] == "found" {
-        return "img/"+hf
+        return img_path+hf
     }
 
     //Crea una copia locale del file originale
     file_split := strings.Split(data[2],"/")
-    src, err := os.Create("img/original/"+file_split[len(file_split)-1])
+    src, err := os.Create(original_img_path+file_split[len(file_split)-1])
     if err != nil {
         log.Fatal(err)
         return "err"
     }
     defer src.Close()
 
-    tsrc, err := os.Open("img/original/"+file_split[len(file_split)-1])
+    tsrc, err := os.Open(original_img_path+file_split[len(file_split)-1])
     if err != nil {
         log.Fatal(err)
         return "err"
@@ -69,7 +72,7 @@ func Recognize(data [3]string) string{
         return "err"
     }
 
-    out, err := os.Create("img/"+hf)
+    out, err := os.Create(img_path+hf)
     if err != nil {
         log.Fatal(err)
         return "err"
@@ -110,7 +113,7 @@ func Recognize(data [3]string) string{
         }
     }
 
-    return "img/"+hf
+    return img_path+hf
 }
 
 func RequestDone(data [3]string) (string,string){
@@ -123,7 +126,7 @@ func RequestDone(data [3]string) (string,string){
     hf := base64.URLEncoding.EncodeToString(h.Sum(nil))
     hf = hf+"."+file_split[len(file_split)-1]
     //Se il file esiste lo restituisco, altrimenti lo creo e lo restituisco
-    if _, err := os.Stat("img/"+hf); !os.IsNotExist(err) {
+    if _, err := os.Stat(img_path+hf); !os.IsNotExist(err) {
         return hf, "found"
     }else{
         return hf, file_split[len(file_split)-1]
