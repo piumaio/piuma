@@ -1,10 +1,12 @@
 package piuma
 
 import (
+    "fmt"
     "net/http"
     "io"
     "os"
     "crypto/sha1"
+    "encoding/base64"
     "strings"
     "image"
     "image/jpeg"
@@ -21,17 +23,24 @@ func Recognize(data [3]string) string{
     done_check[0],done_check[1]=RequestDone(data)
     hf := done_check[0]
     if done_check[1] == "found" {
-        return "/img/"+hf
+        return "img/"+hf
     }
 
     //Crea una copia locale del file originale
     file_split := strings.Split(data[2],"/")
-    src, err := os.Create("/img/original/"+file_split[len(file_split)-1])
+    src, err := os.Create("img/original/"+file_split[len(file_split)-1])
     if err != nil {
         log.Fatal(err)
         return "err"
     }
     defer src.Close()
+
+    tsrc, err := os.Open("img/original/"+file_split[len(file_split)-1])
+    if err != nil {
+        log.Fatal(err)
+        return "err"
+    }
+    defer tsrc.Close()
 
     //Apre il file originale
     image_original, err := http.Get(data[2])
@@ -49,7 +58,6 @@ func Recognize(data [3]string) string{
     }
 
     new_dimensions := strings.Split(data[0],"x")
-    
     new_width, err:=strconv.Atoi(new_dimensions[0])
     if err != nil {
         log.Fatal(err)
@@ -61,7 +69,7 @@ func Recognize(data [3]string) string{
         return "err"
     }
 
-    out, err := os.Open("/img/"+hf)
+    out, err := os.Create("img/"+hf)
     if err != nil {
         log.Fatal(err)
         return "err"
@@ -70,7 +78,7 @@ func Recognize(data [3]string) string{
 
     //Decodifico il file come immagine
     if done_check[1] == "jpeg" || done_check[1] == "jpg" {
-        dec_src, _, err := image.Decode(src)
+        dec_src, _, err := image.Decode(tsrc)
         if err != nil {
             log.Fatal(err)
             return "err"
@@ -86,7 +94,7 @@ func Recognize(data [3]string) string{
         }
 
     }else{
-        dec_src, _, err := image.Decode(src)
+        dec_src, _, err := image.Decode(tsrc)
         if err != nil {
             log.Fatal(err)
             return "err"
@@ -102,7 +110,7 @@ func Recognize(data [3]string) string{
         }
     }
 
-    return "/img/"+hf
+    return "img/"+hf
 }
 
 func RequestDone(data [3]string) (string,string){
@@ -112,19 +120,12 @@ func RequestDone(data [3]string) (string,string){
     hashable := data[0]+data[1]+data[2]
     h := sha1.New()
     h.Write([]byte(hashable))
-    hf := string(h.Sum(nil))
+    hf := base64.URLEncoding.EncodeToString(h.Sum(nil))
     hf = hf+"."+file_split[len(file_split)-1]
-
     //Se il file esiste lo restituisco, altrimenti lo creo e lo restituisco
-    if _, err := os.Stat("/img/"+hf); !os.IsNotExist(err) {
+    if _, err := os.Stat("img/"+hf); !os.IsNotExist(err) {
         return hf, "found"
     }else{
-        out, err := os.Create(hf)
-        if err != nil  {
-            log.Fatal(err)
-            return "err","err"
-        }
-        defer out.Close()
         return hf, file_split[len(file_split)-1]
     }
 }
