@@ -29,10 +29,20 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
        return "", errors.New("Error downloading file " + original_url)
     }
 
-    // Decode and resize
-    var r io.Reader = response.Body
+    defer response.Body.Close()
 
-    img, err := jpeg.Decode(r)
+    // Detect image type
+
+    response_type := response.Header.Get("Content-Type")
+
+    fmt.Println(response_type)
+
+    // Decode and resize
+
+    var reader io.Reader = response.Body
+
+    img, err := jpeg.Decode(reader)
+
     if err != nil {
         return "", errors.New("Error decoding response")
     }
