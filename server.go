@@ -18,12 +18,17 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     // mi e arrivata una url, la passo a parser, cosicchè mi possa tornare un
     // prendo il parser array e lo do ad optimizer che mi ridà la path di una img
     // prendo il path della img, e lo sparo sulla response così
-    core.Parser()
+    //core.Parser()
 }
 
 func main() {
-   router := httprouter.New()
-   router.GET("/:url", Manager)
-   router.GET("/statics", Index)
-   log.Fatal(http.ListenAndServe(":8080", router))
+    // router := httprouter.New()
+    // router.GET("/:url", Manager)
+    // router.GET("/statics", Index)
+    // log.Fatal(http.ListenAndServe(":8080", router))
+    img, err := core.Optimize("http://tvl.lotrek.it/media/MRIM_02_ok.jpg", 500, 0, 80)
+    if err != nil {
+       log.Fatal(err)
+    }
+    fmt.Println(img)
 }
