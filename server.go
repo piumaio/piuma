@@ -5,6 +5,7 @@ import (
     "net/http"
     "log"
     core "./core"
+    "fmt"
     //website "./website"
 )
 
@@ -18,20 +19,16 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     // prendo il parser array e lo do ad optimizer che mi ridà la path di una img
     // prendo il path della img, e lo sparo sulla response così
     //core.Parser()
-    img, content_type, err := core.Optimize("http://tvl.lotrek.it/media/MRIM_02_ok.jpg", 500, 0, 80)
+    img, content_type, err := core.Optimize(ps.ByName("url")[1:], 200, 0, 80)
     if err != nil {
-       log.Fatal(err)
-    }
-    img, content_type, err = core.Optimize("https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png", 200, 0, 80)
-    if err != nil {
-       log.Fatal(err)
+       fmt.Println(err)
     }
     core.BuildResponse(w, img, content_type)
 }
 
 func main() {
     router := httprouter.New()
-    router.GET("/:url", Manager)
+    router.GET("/:parameters/*url", Manager)
     log.Fatal(http.ListenAndServe(":8080", router))
     // img, err := core.Optimize("http://tvl.lotrek.it/media/MRIM_02_ok.jpg", 500, 0, 80)
     // if err != nil {
