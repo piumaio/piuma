@@ -12,6 +12,7 @@ import (
     "image/png"
     "github.com/nfnt/resize"
     "errors"
+    "sync"
 )
 
 
@@ -48,6 +49,17 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
 
     // Decode and resize
     var reader io.Reader = response.Body
+    var new_file_img *os.File = nil
+    var mu = &sync.Mutex{}
+
+    mu.Lock()
+    if _, err := os.Stat(new_image_temp_path); err == nil {
+        return "", "", errors.New("Still elaborating")
+    } else {
+        new_file_img, err = os.Create(new_image_temp_path)
+    }
+    mu.Unlock()
+
     var img image.Image
 
     if response_type == "image/jpeg" {
@@ -64,7 +76,6 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
 
     new_image := resize.Resize(width, height, img, resize.NearestNeighbor)
 
-    new_file_img, err := os.Create(new_image_temp_path)
     if err != nil {
         return "", "", errors.New("Error creating new image")
     }
