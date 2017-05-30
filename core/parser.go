@@ -12,7 +12,8 @@ func IsOfSite(url string) int {
 }
 
 /* questa funzione spezzetta il parametro in url passato */
-func Parser (name string) ([]string) {
+
+func Parser (name string) ([]string) { //return integer, integer , integer, error
 
     /*dichiaro un array di ritorno con tre parametri*/
     arr := make([]string, 3)
