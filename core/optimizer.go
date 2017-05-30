@@ -68,7 +68,6 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
     if err != nil {
         return "", "", errors.New("Error creating new image")
     }
-    defer new_file_img.Close()
 
     // Encode new image
     if response_type == "image/jpeg" {
@@ -80,7 +79,14 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
         return "", "", errors.New("Error encoding response")
     }
 
-    return new_image_temp_path, response_type, nil
+    new_file_img.Close()
+
+    err = os.Rename(new_image_temp_path, new_image_real_path)
+    if err != nil {
+        return "", "", errors.New("Error moving file")
+    }
+
+    return new_image_real_path, response_type, nil
 }
 
 
