@@ -4,7 +4,7 @@ import (
     "github.com/julienschmidt/httprouter"
     "net/http"
     "log"
-    "./core"
+    "piuma/core"
     "fmt"
     //website "./website"
 )
