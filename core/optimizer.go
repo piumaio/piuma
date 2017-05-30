@@ -39,10 +39,11 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
     fmt.Println(new_file_name)
 
     new_image_temp_path := "temp/" + new_file_name
+    new_image_real_path := "media/" + new_file_name
 
     // Check if file exists
-    if _, err := os.Stat(new_image_temp_path); err == nil {
-      return new_image_temp_path, response_type, nil
+    if _, err := os.Stat(new_image_real_path); err == nil {
+      return new_image_real_path, response_type, nil
     }
 
     // Decode and resize
