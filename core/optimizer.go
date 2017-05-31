@@ -76,24 +76,31 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
         if err != nil {
             return "", "", errors.New("Error encoding response")
         }
-        cmd := exec.Command("jpegoptim", fmt.Sprintf("--max=%d %s", quality, new_image_temp_path))
-        err := cmd.Run()
-        if err != nil {
-            return "", "", err
-        }
     } else if response_type == "image/png" {
         err = png.Encode(new_file_img, new_image)
         if err != nil {
             return "", "", errors.New("Error encoding response")
         }
-        var quality_min = quality-10
-        cmd := exec.Command("pngquant", fmt.Sprintf("--quality=%[1]d-%[2]d %[3]s", quality_min, quality, new_image_temp_path))
-        err := cmd.Run()
-        if err != nil {
-            return "", "", err
-        }
     }
     new_file_img.Close()
+
+    if response_type == "image/jpeg" {
+        args := []string{fmt.Sprintf("--max=%d", quality), new_image_temp_path}
+        cmd := exec.Command("jpegoptim", args...)
+        err := cmd.Run()
+        if err != nil {
+            return "", "", errors.New("Jpegoptim command not working")
+        }
+    }else if response_type == "image/png" {
+        var quality_min = quality-10
+        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", quality_min, quality), new_image_temp_path, "-f", "--ext", ""}
+        fmt.Println(args)
+        cmd := exec.Command("pngquant", args...)
+        err := cmd.Run()
+        if err != nil {
+            return "", "", errors.New("Pngquant command not working")
+        }
+    }
 
     err = os.Rename(new_image_temp_path, new_image_real_path)
     if err != nil {
