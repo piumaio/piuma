@@ -4,17 +4,7 @@ import "strconv"
 import "fmt"
 //import "encoding/json"
 
-/*questa funzione controlla se immagine appartiene a tvl o no */
-/*func IsOfSite(url string) int {
-    if strings.Contains(url, "tvl.lotrek.it") {
-        return 1
-    } else {
-        return 0
-    }
-}*/
-
 /* questa funzione spezzetta il parametro in url passato */
-
 func Parser (name string) (uint,uint,uint,error) { //return integer, integer , integer, error
 
     /*ci separiamo la stringa passata per il carattere */
