@@ -18,12 +18,15 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     // mi e arrivata una url, la passo a parser, cosicchè mi possa tornare un
     // prendo il parser array e lo do ad optimizer che mi ridà la path di una img
     // prendo il path della img, e lo sparo sulla response così
-    //core.Parser()
-    img, content_type, err := core.Optimize(ps.ByName("url")[1:], 200, 0, 80)
-    if err != nil {
-       fmt.Println(err)
+    width,height,quality,err := core.Parser(ps.ByName("parameters"))
+    if err == nil {
+        fmt.Println(err)
+        img, content_type, err := core.Optimize(ps.ByName("url")[1:], width, height, quality)
+        if err != nil {
+            fmt.Println(err)
+        }
+        core.BuildResponse(w, img, content_type)
     }
-    core.BuildResponse(w, img, content_type)
 }
 
 func main() {
