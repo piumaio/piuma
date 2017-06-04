@@ -1,6 +1,8 @@
+<img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='384' height="366" />
+
 # Piuma
 
-Simple and fast image optimizer server you can host on your machine
+###Simple and fast image optimizer server you can host on your machine
 
 ## Install
 
