@@ -14,10 +14,11 @@ import (
     "github.com/nfnt/resize"
     "errors"
     "sync"
+    "path/filepath"
 )
 
 
-func Optimize(original_url string, width uint, height uint, quality uint) (string, string, error) {
+func Optimize(original_url string, width uint, height uint, quality uint, pathtemp string, pathmedia string) (string, string, error) {
 
     // Download file
     response, err := http.Get(original_url)
@@ -31,17 +32,14 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
     response_type := response.Header.Get("Content-Type")
     size := response.Header.Get("Content-Length")
     last_modified := response.Header.Get("Last-Modified")
-    fmt.Println(response_type)
-    fmt.Println(response.Header)
 
     // Get Hash Name
     hash := sha1.New()
     hash.Write([]byte(fmt.Sprint(width, height, quality, original_url, response_type, size, last_modified)))
     new_file_name := base64.URLEncoding.EncodeToString(hash.Sum(nil))
-    fmt.Println(new_file_name)
 
-    new_image_temp_path := "temp/" + new_file_name
-    new_image_real_path := "media/" + new_file_name
+    new_image_temp_path := filepath.Join(pathtemp, new_file_name)
+    new_image_real_path := filepath.Join(pathmedia, new_file_name)
 
     // Check if file exists
     if _, err := os.Stat(new_image_real_path); err == nil {
@@ -105,7 +103,6 @@ func Optimize(original_url string, width uint, height uint, quality uint) (strin
     }else if response_type == "image/png" {
         var quality_min = quality-10
         args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", quality_min, quality), new_image_temp_path, "-f", "--ext", ""}
-        fmt.Println(args)
         cmd := exec.Command("pngquant", args...)
         err := cmd.Run()
         if err != nil {

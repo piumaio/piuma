@@ -1,7 +1,6 @@
 package core
 import  "strings"
 import "strconv"
-import "fmt"
 
 
 func Parser (name string) (uint,uint,uint,error) {
@@ -11,7 +10,6 @@ func Parser (name string) (uint,uint,uint,error) {
     var dimqual string = stringSlice[0]
 
     dimQualityArray := strings.Split(dimqual, "_")
-    fmt.Println(dimQualityArray)
     arrayOfInt := make([]uint, 3)
 
     var err error = nil
@@ -23,13 +21,12 @@ func Parser (name string) (uint,uint,uint,error) {
     for i := 0; i <len(dimQualityArray); i++ {
         tmpr,err = strconv.Atoi(dimQualityArray[i])
         arrayOfInt[i] = uint(tmpr)
-        fmt.Println(arrayOfInt[i])
         if err != nil {
             return 0, 0, 0, err
         }
     }
     if err != nil {
-        fmt.Println(err)
+        return 0, 0, 0, err
     }
     return arrayOfInt[0], arrayOfInt[1], arrayOfInt[2], nil
 }

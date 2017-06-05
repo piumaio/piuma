@@ -7,6 +7,8 @@
 ## Install
 
     $ go get github.com/lotrekagency/piuma
+    $ govendor sync
+    $ go install
 
 ## Requirements
 
@@ -17,5 +19,4 @@ Since this project automates two applications, you will need them to be installe
 
 ## Run
 
-    $ go build
-    $ ./piuma
+    $ piuma
