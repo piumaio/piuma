@@ -19,11 +19,11 @@ var pathmedia string = ""
 func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     width, height, quality, err := core.Parser(ps.ByName("parameters"))
     if err == nil {
-        img, content_type, err := core.Optimize(ps.ByName("url")[1:], width, height, quality, pathtemp, pathmedia)
+        img, contentType, err := core.Optimize(ps.ByName("url")[1:], width, height, quality, pathtemp, pathmedia)
         if err != nil {
             fmt.Println(err)
         }
-        core.BuildResponse(w, img, content_type)
+        core.BuildResponse(w, img, contentType)
     }
 
     if err != nil {
@@ -32,8 +32,8 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
            fmt.Println("Error downloading file " + ps.ByName("url")[1:])
         } else {
             var reader io.Reader = response.Body
-            content_type := response.Header.Get("Content-Type")
-            w.Header().Set("Content-Type", content_type) // <-- set the content-type header
+            contentType := response.Header.Get("Content-Type")
+            w.Header().Set("Content-Type", contentType) // <-- set the content-type header
             io.Copy(w, reader)
         }
     }

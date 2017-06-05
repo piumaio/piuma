@@ -18,52 +18,52 @@ import (
 )
 
 
-func Optimize(original_url string, width uint, height uint, quality uint, pathtemp string, pathmedia string) (string, string, error) {
+func Optimize(originalUrl string, width uint, height uint, quality uint, pathtemp string, pathmedia string) (string, string, error) {
 
     // Download file
-    response, err := http.Get(original_url)
+    response, err := http.Get(originalUrl)
     if err != nil {
-       return "", "", errors.New("Error downloading file " + original_url)
+       return "", "", errors.New("Error downloading file " + originalUrl)
     }
 
     defer response.Body.Close()
 
     // Detect image type, size and last modified
-    response_type := response.Header.Get("Content-Type")
+    responseType := response.Header.Get("Content-Type")
     size := response.Header.Get("Content-Length")
-    last_modified := response.Header.Get("Last-Modified")
+    lastModified := response.Header.Get("Last-Modified")
 
     // Get Hash Name
     hash := sha1.New()
-    hash.Write([]byte(fmt.Sprint(width, height, quality, original_url, response_type, size, last_modified)))
-    new_file_name := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+    hash.Write([]byte(fmt.Sprint(width, height, quality, originalUrl, responseType, size, lastModified)))
+    newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
-    new_image_temp_path := filepath.Join(pathtemp, new_file_name)
-    new_image_real_path := filepath.Join(pathmedia, new_file_name)
+    newImageTempPath := filepath.Join(pathtemp, newFileName)
+    newImageRealPath := filepath.Join(pathmedia, newFileName)
 
     // Check if file exists
-    if _, err := os.Stat(new_image_real_path); err == nil {
-      return new_image_real_path, response_type, nil
+    if _, err := os.Stat(newImageRealPath); err == nil {
+      return newImageRealPath, responseType, nil
     }
 
     // Decode and resize
     var reader io.Reader = response.Body
-    var new_file_img *os.File = nil
+    var newFileImg *os.File = nil
     var mu = &sync.Mutex{}
 
     mu.Lock()
-    if _, err := os.Stat(new_image_temp_path); err == nil {
+    if _, err := os.Stat(newImageTempPath); err == nil {
         return "", "", errors.New("Still elaborating")
     } else {
-        new_file_img, err = os.Create(new_image_temp_path)
+        newFileImg, err = os.Create(newImageTempPath)
     }
     mu.Unlock()
 
     var img image.Image
 
-    if response_type == "image/jpeg" {
+    if responseType == "image/jpeg" {
         img, err = jpeg.Decode(reader)
-    } else if response_type == "image/png" {
+    } else if responseType == "image/png" {
         img, err = png.Decode(reader)
     } else {
         return "", "", errors.New("Format not supported")
@@ -73,36 +73,36 @@ func Optimize(original_url string, width uint, height uint, quality uint, pathte
         return "", "", errors.New("Error decoding response")
     }
 
-    new_image := resize.Resize(width, height, img, resize.NearestNeighbor)
+    newImage := resize.Resize(width, height, img, resize.NearestNeighbor)
 
     if err != nil {
         return "", "", errors.New("Error creating new image")
     }
 
     // Encode new image
-    if response_type == "image/jpeg" {
-        err = jpeg.Encode(new_file_img, new_image, nil)
+    if responseType == "image/jpeg" {
+        err = jpeg.Encode(newFileImg, newImage, nil)
         if err != nil {
             return "", "", errors.New("Error encoding response")
         }
-    } else if response_type == "image/png" {
-        err = png.Encode(new_file_img, new_image)
+    } else if responseType == "image/png" {
+        err = png.Encode(newFileImg, newImage)
         if err != nil {
             return "", "", errors.New("Error encoding response")
         }
     }
-    new_file_img.Close()
+    newFileImg.Close()
 
-    if response_type == "image/jpeg" {
-        args := []string{fmt.Sprintf("--max=%d", quality), new_image_temp_path}
+    if responseType == "image/jpeg" {
+        args := []string{fmt.Sprintf("--max=%d", quality), newImageTempPath}
         cmd := exec.Command("jpegoptim", args...)
         err := cmd.Run()
         if err != nil {
             return "", "", errors.New("Jpegoptim command not working")
         }
-    }else if response_type == "image/png" {
-        var quality_min = quality-10
-        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", quality_min, quality), new_image_temp_path, "-f", "--ext", ""}
+    }else if responseType == "image/png" {
+        var qualityMin = quality-10
+        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality), newImageTempPath, "-f", "--ext", ""}
         cmd := exec.Command("pngquant", args...)
         err := cmd.Run()
         if err != nil {
@@ -110,22 +110,22 @@ func Optimize(original_url string, width uint, height uint, quality uint, pathte
         }
     }
 
-    err = os.Rename(new_image_temp_path, new_image_real_path)
+    err = os.Rename(newImageTempPath, newImageRealPath)
     if err != nil {
         return "", "", errors.New("Error moving file")
     }
 
-    return new_image_real_path, response_type, nil
+    return newImageRealPath, responseType, nil
 }
 
 
-func BuildResponse (w http.ResponseWriter, image_path string, content_type string) (error){
-    img, err := os.Open(image_path)
+func BuildResponse (w http.ResponseWriter, imagePath string, contentType string) (error){
+    img, err := os.Open(imagePath)
     if err != nil {
         return errors.New("Error reading from optimized file")
     }
     defer img.Close()
-    w.Header().Set("Content-Type", content_type) // <-- set the content-type header
+    w.Header().Set("Content-Type", contentType) // <-- set the content-type header
     io.Copy(w, img)
     return nil
 }
