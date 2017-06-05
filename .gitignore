@@ -4,3 +4,6 @@ piuma
 # Default media folder
 temp
 media
+
+# Vendor
+vendor/*/

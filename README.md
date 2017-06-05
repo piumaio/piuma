@@ -6,8 +6,7 @@
 
 ## Install
 
-    $ go get github.com/julienschmidt/httprouter
-    $ go get github.com/nfnt/resize
+    $ go get github.com/lotrekagency/piuma
 
 ## Requirements
 

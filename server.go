@@ -2,9 +2,9 @@ package main
 
 import (
     "github.com/julienschmidt/httprouter"
+    "github.com/lotrekagency/piuma/core"
     "net/http"
     "log"
-    "./core"
     "fmt"
     "io"
 )
