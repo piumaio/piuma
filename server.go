@@ -10,6 +10,7 @@ import (
     "io"
     "os"
     "os/user"
+    "flag"
 )
 
 var pathtemp string = ""
@@ -41,19 +42,24 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func main() {
 
     usr, err := user.Current()
+    var port string = "8080"
 
     if err != nil {
         fmt.Println(err)
         return
     }
 
-    pathtemp = filepath.Join(usr.HomeDir, ".piuma", "temp")
-    pathmedia = filepath.Join(usr.HomeDir, ".piuma", "media")
+    flag.StringVar(&port, "port", "8080", "Port where piuma will run")
+    flag.StringVar(&pathmedia, "mediapath", filepath.Join(usr.HomeDir, ".piuma", "media"), "Media path")
+
+    flag.Parse()
+
+    pathtemp = filepath.Join(pathmedia, "temp")
 
     os.MkdirAll(pathtemp, os.ModePerm)
     os.MkdirAll(pathmedia, os.ModePerm)
 
     router := httprouter.New()
     router.GET("/:parameters/*url", Manager)
-    log.Fatal(http.ListenAndServe(":8080", router))
+    log.Fatal(http.ListenAndServe(":" + port, router))
 }

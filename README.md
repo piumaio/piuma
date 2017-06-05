@@ -21,6 +21,12 @@ Since this project automates two applications, you will need them to be installe
 
     $ piuma
 
+You can also change the default `port` and `mediapath`, type
+
+    $ piuma --help
+
+for more info.
+
 ## Usage
 
     https://yourpiumahost/Options/Image_URL
