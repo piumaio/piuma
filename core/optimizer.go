@@ -7,7 +7,6 @@ import (
     "os/exec"
     "crypto/sha1"
     "encoding/base64"
-    "fmt"
     "image"
     "image/jpeg"
     "image/png"
@@ -15,6 +14,7 @@ import (
     "errors"
     "sync"
     "path/filepath"
+    "fmt"
 )
 
 
@@ -102,10 +102,12 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
         }
     }else if responseType == "image/png" {
         var qualityMin = quality-10
-        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality), newImageTempPath, "-f", "--ext", ""}
+        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality), newImageTempPath, "-f", "--ext=\"\""}
+        fmt.Println(args)
         cmd := exec.Command("pngquant", args...)
         err := cmd.Run()
         if err != nil {
+            fmt.Println(err)
             return "", "", errors.New("Pngquant command not working")
         }
     }
