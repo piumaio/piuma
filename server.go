@@ -31,7 +31,7 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
         if err != nil {
             fmt.Println(err)
         } else {
-            core.BuildResponse(w, img, contentType)
+            err = core.BuildResponse(w, img, contentType)
         }
     }
 

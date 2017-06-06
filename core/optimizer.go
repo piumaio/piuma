@@ -66,16 +66,19 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
     } else if responseType == "image/png" {
         img, err = png.Decode(reader)
     } else {
+        os.Remove(newImageTempPath)
         return "", "", errors.New("Format not supported")
     }
 
     if err != nil {
+        os.Remove(newImageTempPath)
         return "", "", errors.New("Error decoding response")
     }
 
     newImage := resize.Resize(width, height, img, resize.NearestNeighbor)
 
     if err != nil {
+        os.Remove(newImageTempPath)
         return "", "", errors.New("Error creating new image")
     }
 
@@ -83,11 +86,13 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
     if responseType == "image/jpeg" {
         err = jpeg.Encode(newFileImg, newImage, nil)
         if err != nil {
+            os.Remove(newImageTempPath)
             return "", "", errors.New("Error encoding response")
         }
     } else if responseType == "image/png" {
         err = png.Encode(newFileImg, newImage)
         if err != nil {
+            os.Remove(newImageTempPath)
             return "", "", errors.New("Error encoding response")
         }
     }
@@ -98,6 +103,7 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
         cmd := exec.Command("jpegoptim", args...)
         err := cmd.Run()
         if err != nil {
+            os.Remove(newImageTempPath)
             return "", "", errors.New("Jpegoptim command not working")
         }
     }else if responseType == "image/png" {
@@ -110,12 +116,14 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
         cmd := exec.Command("pngquant", args...)
         err := cmd.Run()
         if err != nil {
+            os.Remove(newImageTempPath)
             return "", "", errors.New("Pngquant command not working")
         }
     }
 
     err = os.Rename(newImageTempPath, newImageRealPath)
     if err != nil {
+        os.Remove(newImageTempPath)
         return "", "", errors.New("Error moving file")
     }
 
