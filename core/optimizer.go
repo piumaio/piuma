@@ -101,13 +101,15 @@ func Optimize(originalUrl string, width uint, height uint, quality uint, pathtem
             return "", "", errors.New("Jpegoptim command not working")
         }
     }else if responseType == "image/png" {
-        var qualityMin = quality-10
-        args := []string{fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality), newImageTempPath, "-f", "--ext=\"\""}
-        fmt.Println(args)
+        args := []string{newImageTempPath, "-f", "--ext=\"\""}
+        if quality != 100 {
+            var qualityMin = quality-10
+            qualityParameter := fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality)
+            args = append([]string{qualityParameter}, args...)
+        }
         cmd := exec.Command("pngquant", args...)
         err := cmd.Run()
         if err != nil {
-            fmt.Println(err)
             return "", "", errors.New("Pngquant command not working")
         }
     }
