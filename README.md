@@ -46,3 +46,9 @@ If you want to specify only the `width`, you'll get a new image keeping the rati
 If you want to specify only the `height`
 
     https://yourpiumahost/0_100/Image URL
+
+## Running tests
+To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run: 
+```
+go test -v
+```
