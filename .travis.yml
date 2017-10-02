@@ -5,8 +5,5 @@ go:
  - 1.9.x
  - master
 
-install:
- - go get -t ./...
-
 script:
  - go test -v ./...
