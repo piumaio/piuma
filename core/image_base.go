@@ -11,6 +11,7 @@ type ImageHandler interface {
 	ImageType() string
 	Decode(reader io.Reader) (image.Image, error)
 	Encode(newImgFile *os.File, newImage image.Image) error
+	Convert(newImageTempPath string, quality uint) error
 }
 
 func NewImageHandler(imageType string) (ImageHandler, error) {
