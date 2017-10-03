@@ -1,8 +1,8 @@
-<img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" />
 
-# Piuma
+# Piuma    [![Build Status](https://travis-ci.org/lotrekagency/piuma.svg?branch=master)](https://travis-ci.org/lotrekagency/piuma)
 
 ### Simple and fast image optimizer server you can host on your machine
+<img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" />
 
 ## Install
 
@@ -49,6 +49,6 @@ If you want to specify only the `height`
 
 ## Running tests
 To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run: 
-```
-go test -v
-```
+ 
+    $ go test -v ./...
+ 
