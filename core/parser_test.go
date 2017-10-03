@@ -12,53 +12,59 @@ const failed = "\u2717"
 // TestParser tests that parser works correctly.
 func TestParser(t *testing.T) {
 	tt := []struct {
-		parameters string
-		width      uint
-		height     uint
-		quality    uint
+		input           string
+		imageParameters core.ImageParameters
 	}{
 		{
-			parameters: "100_100_50",
-			width:      100,
-			height:     100,
-			quality:    50,
+			input: "100_100_50",
+			imageParameters: core.ImageParameters{
+				Width:   100,
+				Height:  100,
+				Quality: 50,
+			},
 		},
 		{
-			parameters: "100_100_50/http://someurl",
-			width:      100,
-			height:     100,
-			quality:    50,
+			input: "100_100_50/http://someurl",
+			imageParameters: core.ImageParameters{
+				Width:   100,
+				Height:  100,
+				Quality: 50,
+			},
 		},
 		{
-			parameters: "100_100__50",
-			width:      0,
-			height:     0,
-			quality:    0,
+			input: "100_100__50",
+			imageParameters: core.ImageParameters{
+				Width:   0,
+				Height:  0,
+				Quality: 0,
+			},
 		},
 		{
-			parameters: "100_100",
-			width:      100,
-			height:     100,
-			quality:    100,
+			input: "100_100",
+			imageParameters: core.ImageParameters{
+				Width:   100,
+				Height:  100,
+				Quality: 100,
+			},
 		},
 	}
 
 	for i, tst := range tt {
-		t.Logf("\tTest %d: \t%s", i, tst.parameters)
+		t.Logf("\tTest %d: \t%s", i, tst.input)
 
-		width, height, quality, _ := core.Parser(tst.parameters)
-		if width != tst.width {
-			t.Fatalf("\t%s\t Should have correct width:  exp[%d] got[%d] ", failed, tst.width, width)
+		result, _ := core.Parser(tst.input)
+		if result.Width != tst.imageParameters.Width {
+			t.Fatalf("\t%s\t Should have correct width:  exp[%d] got[%d] ", failed, tst.imageParameters.Width, result.Width)
 		}
 		t.Logf("\t%s\tShould have correct width\n", succeeded)
 
-		if height != tst.height {
-			t.Fatalf("\t%s\t Should have correct height:  exp[%d] got[%d] ", failed, tst.height, height)
+		if result.Height != tst.imageParameters.Height {
+			t.Fatalf("\t%s\t Should have correct height:  exp[%d] got[%d] ", failed, tst.imageParameters.Height, result.Height)
 		}
 		t.Logf("\t%s\tShould have correct height\n", succeeded)
 
-		if quality != tst.quality {
-			t.Fatalf("\t%s\t Should have correct quality:  exp[%d] got[%d] ", failed, tst.quality, quality)
+		if result.Quality != tst.imageParameters.Quality {
+			t.Fatalf("\t%s\t Should have correct quality:  exp[%d] got[%d] ", failed, tst.imageParameters.Quality, result.Quality)
 		}
 		t.Logf("\t%s\tShould have correct quality\n", succeeded)
 	}
