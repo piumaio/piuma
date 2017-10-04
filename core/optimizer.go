@@ -1,142 +1,142 @@
 package core
 
 import (
-	"crypto/sha1"
-	"encoding/base64"
-	"errors"
-	"fmt"
-	"image"
-	"image/jpeg"
-	"image/png"
-	"io"
-	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"sync"
+    "crypto/sha1"
+    "encoding/base64"
+    "errors"
+    "fmt"
+    "image"
+    "image/jpeg"
+    "image/png"
+    "io"
+    "net/http"
+    "os"
+    "os/exec"
+    "path/filepath"
+    "sync"
 
-	"github.com/nfnt/resize"
+    "github.com/nfnt/resize"
 )
 
 func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp string, pathmedia string) (string, string, error) {
 
-	// Download file
-	response, err := http.Get(originalUrl)
-	if err != nil {
-		return "", "", errors.New("Error downloading file " + originalUrl)
-	}
+    // Download file
+    response, err := http.Get(originalUrl)
+    if err != nil {
+        return "", "", errors.New("Error downloading file " + originalUrl)
+    }
 
-	defer response.Body.Close()
+    defer response.Body.Close()
 
-	// Detect image type, size and last modified
-	responseType := response.Header.Get("Content-Type")
-	size := response.Header.Get("Content-Length")
-	lastModified := response.Header.Get("Last-Modified")
+    // Detect image type, size and last modified
+    responseType := response.Header.Get("Content-Type")
+    size := response.Header.Get("Content-Length")
+    lastModified := response.Header.Get("Last-Modified")
 
-	// Get Hash Name
-	hash := sha1.New()
-	hash.Write([]byte(fmt.Sprint(imageParameters.Width, imageParameters.Height, imageParameters.Quality, originalUrl, responseType, size, lastModified)))
-	newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+    // Get Hash Name
+    hash := sha1.New()
+    hash.Write([]byte(fmt.Sprint(imageParameters.Width, imageParameters.Height, imageParameters.Quality, originalUrl, responseType, size, lastModified)))
+    newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
-	newImageTempPath := filepath.Join(pathtemp, newFileName)
-	newImageRealPath := filepath.Join(pathmedia, newFileName)
+    newImageTempPath := filepath.Join(pathtemp, newFileName)
+    newImageRealPath := filepath.Join(pathmedia, newFileName)
 
-	// Check if file exists
-	if _, err := os.Stat(newImageRealPath); err == nil {
-		return newImageRealPath, responseType, nil
-	}
+    // Check if file exists
+    if _, err := os.Stat(newImageRealPath); err == nil {
+        return newImageRealPath, responseType, nil
+    }
 
-	// Decode and resize
-	var reader io.Reader = response.Body
-	var newFileImg *os.File
-	var mu = &sync.Mutex{}
+    // Decode and resize
+    var reader io.Reader = response.Body
+    var newFileImg *os.File
+    var mu = &sync.Mutex{}
 
-	mu.Lock()
-	if _, err := os.Stat(newImageTempPath); err == nil {
-		return "", "", errors.New("Still elaborating")
-	}
+    mu.Lock()
+    if _, err := os.Stat(newImageTempPath); err == nil {
+        return "", "", errors.New("Still elaborating")
+    }
 
-	newFileImg, err = os.Create(newImageTempPath)
-	mu.Unlock()
+    newFileImg, err = os.Create(newImageTempPath)
+    mu.Unlock()
 
-	var img image.Image
+    var img image.Image
 
-	if responseType == "image/jpeg" {
-		img, err = jpeg.Decode(reader)
-	} else if responseType == "image/png" {
-		img, err = png.Decode(reader)
-	} else {
-		os.Remove(newImageTempPath)
-		return "", "", errors.New("Format not supported")
-	}
+    if responseType == "image/jpeg" {
+        img, err = jpeg.Decode(reader)
+    } else if responseType == "image/png" {
+        img, err = png.Decode(reader)
+    } else {
+        os.Remove(newImageTempPath)
+        return "", "", errors.New("Format not supported")
+    }
 
-	if err != nil {
-		os.Remove(newImageTempPath)
-		return "", "", errors.New("Error decoding response")
-	}
+    if err != nil {
+        os.Remove(newImageTempPath)
+        return "", "", errors.New("Error decoding response")
+    }
 
-	newImage := resize.Resize(imageParameters.Width, imageParameters.Height, img, resize.NearestNeighbor)
+    newImage := resize.Resize(imageParameters.Width, imageParameters.Height, img, resize.NearestNeighbor)
 
-	if err != nil {
-		os.Remove(newImageTempPath)
-		return "", "", errors.New("Error creating new image")
-	}
+    if err != nil {
+        os.Remove(newImageTempPath)
+        return "", "", errors.New("Error creating new image")
+    }
 
-	// Encode new image
-	if responseType == "image/jpeg" {
-		err = jpeg.Encode(newFileImg, newImage, nil)
-		if err != nil {
-			os.Remove(newImageTempPath)
-			return "", "", errors.New("Error encoding response")
-		}
-	} else if responseType == "image/png" {
-		err = png.Encode(newFileImg, newImage)
-		if err != nil {
-			os.Remove(newImageTempPath)
-			return "", "", errors.New("Error encoding response")
-		}
-	}
-	newFileImg.Close()
+    // Encode new image
+    if responseType == "image/jpeg" {
+        err = jpeg.Encode(newFileImg, newImage, nil)
+        if err != nil {
+            os.Remove(newImageTempPath)
+            return "", "", errors.New("Error encoding response")
+        }
+    } else if responseType == "image/png" {
+        err = png.Encode(newFileImg, newImage)
+        if err != nil {
+            os.Remove(newImageTempPath)
+            return "", "", errors.New("Error encoding response")
+        }
+    }
+    newFileImg.Close()
 
-	if responseType == "image/jpeg" {
-		args := []string{fmt.Sprintf("--max=%d", imageParameters.Quality), newImageTempPath}
-		cmd := exec.Command("jpegoptim", args...)
-		err := cmd.Run()
-		if err != nil {
-			os.Remove(newImageTempPath)
-			return "", "", errors.New("Jpegoptim command not working")
-		}
-	} else if responseType == "image/png" {
-		args := []string{newImageTempPath, "-f", "--ext=\"\""}
-		if imageParameters.Quality != 100 {
-			var qualityMin = imageParameters.Quality - 10
-			qualityParameter := fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, imageParameters.Quality)
-			args = append([]string{qualityParameter}, args...)
-		}
-		cmd := exec.Command("pngquant", args...)
-		err := cmd.Run()
-		if err != nil {
-			os.Remove(newImageTempPath)
-			return "", "", errors.New("Pngquant command not working")
-		}
-	}
+    if responseType == "image/jpeg" {
+        args := []string{fmt.Sprintf("--max=%d", imageParameters.Quality), newImageTempPath}
+        cmd := exec.Command("jpegoptim", args...)
+        err := cmd.Run()
+        if err != nil {
+            os.Remove(newImageTempPath)
+            return "", "", errors.New("Jpegoptim command not working")
+        }
+    } else if responseType == "image/png" {
+        args := []string{newImageTempPath, "-f", "--ext=\"\""}
+        if imageParameters.Quality != 100 {
+            var qualityMin = imageParameters.Quality - 10
+            qualityParameter := fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, imageParameters.Quality)
+            args = append([]string{qualityParameter}, args...)
+        }
+        cmd := exec.Command("pngquant", args...)
+        err := cmd.Run()
+        if err != nil {
+            os.Remove(newImageTempPath)
+            return "", "", errors.New("Pngquant command not working")
+        }
+    }
 
-	err = os.Rename(newImageTempPath, newImageRealPath)
-	if err != nil {
-		os.Remove(newImageTempPath)
-		return "", "", errors.New("Error moving file")
-	}
+    err = os.Rename(newImageTempPath, newImageRealPath)
+    if err != nil {
+        os.Remove(newImageTempPath)
+        return "", "", errors.New("Error moving file")
+    }
 
-	return newImageRealPath, responseType, nil
+    return newImageRealPath, responseType, nil
 }
 
 func BuildResponse(w http.ResponseWriter, imagePath string, contentType string) error {
-	img, err := os.Open(imagePath)
-	if err != nil {
-		return errors.New("Error reading from optimized file")
-	}
-	defer img.Close()
-	w.Header().Set("Content-Type", contentType) // <-- set the content-type header
-	io.Copy(w, img)
-	return nil
+    img, err := os.Open(imagePath)
+    if err != nil {
+        return errors.New("Error reading from optimized file")
+    }
+    defer img.Close()
+    w.Header().Set("Content-Type", contentType) // <-- set the content-type header
+    io.Copy(w, img)
+    return nil
 }
