@@ -5,14 +5,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/nfnt/resize"
 	"image"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
-
-	"github.com/nfnt/resize"
 )
 
 func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp string, pathmedia string) (string, string, error) {
@@ -98,6 +97,7 @@ func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp stri
 	}
 
 	return newImageRealPath, responseType, nil
+
 }
 
 func BuildResponse(w http.ResponseWriter, imagePath string, contentType string) error {
