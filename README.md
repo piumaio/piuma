@@ -1,5 +1,5 @@
 
-# Piuma    [![Build Status](https://travis-ci.org/lotrekagency/piuma.svg?branch=master)](https://travis-ci.org/lotrekagency/piuma)
+# Piuma    [![Build Status](https://travis-ci.org/lotrekagency/piuma.svg?branch=master)](https://travis-ci.org/lotrekagency/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/lotrekagency/piuma.svg)](https://codecov.io/gh/lotrekagency/piuma)
 
 ### Simple and fast image optimizer server you can host on your machine
 <img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" />
