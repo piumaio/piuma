@@ -25,6 +25,20 @@ You can also change the default `port` and `mediapath`, type
 
 for more info.
 
+# Running with Docker
+
+Use the following command to build the Docker image from the root folder: 
+```
+docker build -t piuma .
+```
+
+Next, you can run the image and provide the port and the mediapath where the optimized images will be stored:
+```
+docker run -p 8080:8080 -v $PWD:/data piuma -mediapath /data
+```
+
+Above command will run Piuma on ```http://localhost:8080``` and it's going to store all optimized images in the current directory (```$PWD```).
+
 ## Usage
 
     https://yourpiumahost/Options/Image_URL
