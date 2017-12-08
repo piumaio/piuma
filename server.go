@@ -20,21 +20,25 @@ var pathmedia string
 func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     var contentType string
     var response *http.Response
+    imageURL := ps.ByName("url")[1:]
+    parameters := ps.ByName("parameters")
 
-    imageParameters, err := core.Parser(ps.ByName("parameters"))
-    if err == nil {
-        img, contentType, err := core.Optimize(ps.ByName("url")[1:], imageParameters, pathtemp, pathmedia)
-        if err != nil {
-            fmt.Println(err)
-        } else {
-            err = core.BuildResponse(w, img, contentType)
-        }
+    imageParameters, err := core.Parser(parameters)
+    if err != nil {
+        log.Printf("[ERROR]: parsing parameters [ %s ] : [ %s ]\n", parameters, err)
+    }
+
+    img, contentType, err := core.Optimize(imageURL, imageParameters, pathtemp, pathmedia)
+    if err != nil {
+        fmt.Printf("[ERROR]: optimizing image [ %s ]\n", err)
+    } else {
+        err = core.BuildResponse(w, img, contentType)
     }
 
     if err != nil {
-        response, err = http.Get(ps.ByName("url")[1:])
+        response, err = http.Get(imageURL)
         if err != nil {
-            fmt.Println("Error downloading file " + ps.ByName("url")[1:])
+            log.Printf("[ERROR]: downloading file [ %s ] - [ %s ]\n", imageURL, err)
         } else {
             var reader io.Reader = response.Body
             contentType = response.Header.Get("Content-Type")
@@ -52,12 +56,10 @@ func init() {
 func main() {
     usr, err := user.Current()
     if err != nil {
-        log.Printf("[ERROR]: failed getting user [ %s ]", err)
+        log.Printf("[ERROR]: failed getting user [ %s ]\n", err)
         os.Exit(1)
     }
 
-    // TODO: This could be passed in as an argument and/or read
-    // from an enviroment variable
     var port = "8080"
 
     flag.StringVar(&port, "port", port, "Port where piuma will run")
