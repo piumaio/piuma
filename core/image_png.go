@@ -26,7 +26,7 @@ func (p *PNGHandler) Encode(newImgFile *os.File, newImage image.Image) error {
 }
 
 func (p *PNGHandler) Convert(newImageTempPath string, quality uint) error {
-    args := []string{newImageTempPath, "-f", "--ext=\"\""}
+    args := []string{newImageTempPath, "-f", "--ext=.png"}
 
     if quality != 100 {
         var qualityMin = quality - 10
