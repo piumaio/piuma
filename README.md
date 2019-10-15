@@ -1,12 +1,12 @@
 
-# Piuma    [![Build Status](https://travis-ci.org/lotrekagency/piuma.svg?branch=master)](https://travis-ci.org/lotrekagency/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/lotrekagency/piuma.svg)](https://codecov.io/gh/lotrekagency/piuma)
+# Piuma    [![Build Status](https://travis-ci.org/piumaio/piuma.svg?branch=master)](https://travis-ci.org/piumaio/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/piumaio/piuma.svg)](https://codecov.io/gh/piumaio/piuma)
 
 ### Simple and fast image optimizer service you can host on your machine
 <img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" />
 
 ## Install
 
-    $ go get github.com/lotrekagency/piuma
+    $ go get github.com/piumaio/piuma
 
 ## Requirements
 
@@ -27,7 +27,7 @@ for more info.
 
 # Running with Docker
 
-Use the following command to build the Docker image from the root folder: 
+Use the following command to build the Docker image from the root folder:
 ```
 docker build -t piuma .
 ```
@@ -62,7 +62,7 @@ If you want to specify only the `height`
     https://yourpiumahost/0_100/Image URL
 
 ## Running tests
-To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run: 
- 
+To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run:
+
     $ go test -v ./...
- 
+

@@ -4,7 +4,7 @@ import (
     "flag"
     "fmt"
     "github.com/julienschmidt/httprouter"
-    "github.com/lotrekagency/piuma/core"
+    "github.com/piumaio/piuma/core"
     "io"
     "log"
     "net/http"

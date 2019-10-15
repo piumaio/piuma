@@ -3,7 +3,7 @@ package core_test
 import (
     "testing"
 
-    "github.com/lotrekagency/piuma/core"
+    "github.com/piumaio/piuma/core"
 )
 
 const succeeded = "\u2713"
