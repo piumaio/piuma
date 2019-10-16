@@ -29,7 +29,7 @@ func (p *PNGHandler) Convert(newImageTempPath string, quality uint) error {
     var err error
     var cmd *exec.Cmd
 
-    default_args := []string{newImageTempPath, "-f", "--ext=.png", "--skip-if-larger", "--strip"}
+    default_args := []string{newImageTempPath, "-f",  "--ext=.png", "-s10", "--skip-if-larger", "--strip"}
 
     if quality != 100 {
         var qualityMin = quality - 10
