@@ -8,8 +8,8 @@ RUN cd ${SOURCE_DIR}; go get -u; CGO_ENABLED=0 GOOS=linux go build -o app; cp ap
 FROM alpine:3.10.2
 RUN apk update
 
-# Install pngquant
-RUN apk add pngquant
+# Install OptiPNG
+RUN apk add optipng
 
 ## Install JPEGOptim
 RUN apk add jpegoptim

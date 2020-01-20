@@ -2,7 +2,6 @@ package core
 
 import (
     "errors"
-    "fmt"
     "image"
     "image/png"
     "io"
@@ -29,22 +28,12 @@ func (p *PNGHandler) Convert(newImageTempPath string, quality uint) error {
     var err error
     var cmd *exec.Cmd
 
-    default_args := []string{newImageTempPath, "-f",  "--ext=.png", "-s10", "--skip-if-larger", "--strip"}
+    default_args := []string{newImageTempPath}
 
-    if quality != 100 {
-        var qualityMin = quality - 10
-        qualityParameter := fmt.Sprintf("--quality=%[1]d-%[2]d", qualityMin, quality)
-        args := append([]string{qualityParameter}, default_args...)
-        cmd = exec.Command("pngquant", args...)
-        err = cmd.Run()
-        if err == nil {
-            return nil
-        }
-    }
-    cmd = exec.Command("pngquant", default_args...)
+    cmd = exec.Command("optipng", default_args...)
     err = cmd.Run()
     if err != nil {
-        return errors.New("Pngquant command not working")
+        return errors.New("OptiPNG command not working")
     }
 
     return nil

@@ -12,7 +12,7 @@
 
 Since this project automates two applications, you will need them to be installed on your machine for us to be able to reach them:
 
-- [pngquant](https://pngquant.org/)
+- [OptiPNG](http://optipng.sourceforge.net/)
 - [jpegoptim](https://github.com/tjko/jpegoptim)
 
 ## Run
