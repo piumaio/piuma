@@ -1,12 +1,15 @@
+<p align="center"><img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" /></p>
+
 
 # Piuma    [![Build Status](https://travis-ci.org/piumaio/piuma.svg?branch=master)](https://travis-ci.org/piumaio/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/piumaio/piuma.svg)](https://codecov.io/gh/piumaio/piuma)
 
-### Simple and fast image optimizer service you can host on your machine
-<img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" />
+Simple and fast image optimizer service you can host on your machine
 
 ## Install
 
-    $ go get github.com/piumaio/piuma
+```
+go get github.com/piumaio/piuma
+```
 
 ## Requirements
 
@@ -17,17 +20,22 @@ Since this project automates two applications, you will need them to be installe
 
 ## Run
 
-    $ piuma
+```
+piuma
+```
 
-You can also change the default `port` and `mediapath`, type
+You can also change the default `port` (`8080` by default) and `mediapath`, type
 
-    $ piuma --help
+```
+piuma --help
+```
 
 for more info.
 
 # Running with Docker
 
 Use the following command to build the Docker image from the root folder:
+
 ```
 docker build -t piuma .
 ```
@@ -51,18 +59,19 @@ Where `quality` is a value between 0 and 100.
 
 To get your image resized to 100 x 100:
 
-    https://yourpiumahost/100_100/Image URL
+    https://yourpiumahost/100_100/<Image_URL>
 
 If you want to specify only the `width`, you'll get a new image keeping the ratio:
 
-    https://yourpiumahost/100/Image URL
+    https://yourpiumahost/100/<Image_URL>
 
 If you want to specify only the `height`
 
-    https://yourpiumahost/0_100/Image URL
+    https://yourpiumahost/0_100/<Image_URL>
 
 ## Running tests
 To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run:
 
-    $ go test -v ./...
-
+```
+go test -v ./...
+```
