@@ -1,7 +1,10 @@
 <p align="center"><img src="https://raw.githubusercontent.com/astagi/mystatics/master/piuma/Piuma_rounded_1.png" width='192' height="183" /></p>
 
 
-# Piuma    [![Build Status](https://travis-ci.org/piumaio/piuma.svg?branch=master)](https://travis-ci.org/piumaio/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/piumaio/piuma.svg)](https://codecov.io/gh/piumaio/piuma)
+# Piuma    
+[![](https://images.microbadger.com/badges/version/piumaio/piuma.svg)](https://microbadger.com/images/piumaio/piuma "Get your own version badge on microbadger.com")
+[![Build Status](https://travis-ci.org/piumaio/piuma.svg?branch=master)](https://travis-ci.org/piumaio/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/piumaio/piuma.svg)](https://codecov.io/gh/piumaio/piuma)
+
 
 Simple and fast image optimizer service you can host on your machine
 
