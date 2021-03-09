@@ -1,112 +1,134 @@
 package core
 
 import (
-    "crypto/sha1"
-    "encoding/base64"
-    "errors"
-    "fmt"
-    "github.com/nfnt/resize"
-    "image"
-    "io"
-    "net/http"
-    "os"
-    "path/filepath"
-    "sync"
+	"crypto/sha1"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"image"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sync"
+
+	"github.com/nfnt/resize"
 )
 
 func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp string, pathmedia string) (string, string, error) {
 
-    // Download file
-    response, err := http.Get(originalUrl)
-    if err != nil {
-        return "", "", errors.New("Error downloading file " + originalUrl)
-    }
+	// Download file
+	response, err := http.Get(originalUrl)
+	if err != nil {
+		return "", "", errors.New("Error downloading file " + originalUrl)
+	}
 
-    defer response.Body.Close()
+	defer response.Body.Close()
 
-    // Detect image type, size and last modified
-    responseType := response.Header.Get("Content-Type")
-    size := response.Header.Get("Content-Length")
-    lastModified := response.Header.Get("Last-Modified")
+	// Detect image type, size and last modified
+	responseType := response.Header.Get("Content-Type")
+	size := response.Header.Get("Content-Length")
+	lastModified := response.Header.Get("Last-Modified")
 
-    // Get Hash Name
-    hash := sha1.New()
-    hash.Write([]byte(fmt.Sprint(imageParameters.Width, imageParameters.Height, imageParameters.Quality, originalUrl, responseType, size, lastModified)))
-    newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	// Get Hash Name
+	hash := sha1.New()
+	hash.Write([]byte(fmt.Sprint(imageParameters.prepareHashData(), originalUrl, responseType, size, lastModified)))
+	newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
-    newImageTempPath := filepath.Join(pathtemp, newFileName)
-    newImageRealPath := filepath.Join(pathmedia, newFileName)
+	newImageTempPath := filepath.Join(pathtemp, newFileName)
+	newImageRealPath := filepath.Join(pathmedia, newFileName)
 
-    // Check if file exists
-    if _, err := os.Stat(newImageRealPath); err == nil {
-        return newImageRealPath, responseType, nil
-    }
+	// Check if file exists
+	if _, err := os.Stat(newImageRealPath); err == nil {
+		if imageParameters.Convert != "" {
+			responseType, err = extensionToImageType(imageParameters.Convert)
+			if err != nil {
+				return "", "", err
+			}
+		}
 
-    // Decode and resize
-    var reader io.Reader = response.Body
-    var newFileImg *os.File
-    var mu = &sync.Mutex{}
+		return newImageRealPath, responseType, nil
+	}
 
-    mu.Lock()
-    if _, err := os.Stat(newImageTempPath); err == nil {
-        return "", "", errors.New("Still elaborating")
-    }
+	// Decode and resize
+	var reader io.Reader = response.Body
+	var newFileImg *os.File
+	var mu = &sync.Mutex{}
 
-    newFileImg, err = os.Create(newImageTempPath)
-    mu.Unlock()
+	mu.Lock()
+	if _, err := os.Stat(newImageTempPath); err == nil {
+		return "", "", errors.New("Still elaborating")
+	}
 
-    var img image.Image
-    var imageHandler ImageHandler
+	newFileImg, err = os.Create(newImageTempPath)
+	mu.Unlock()
 
-    imageHandler, err = NewImageHandler(responseType)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", err
-    }
+	var img image.Image
+	var imageHandler ImageHandler
 
-    img, err = imageHandler.Decode(reader)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", errors.New("Error decoding response")
-    }
+	imageHandler, err = NewImageHandler(responseType)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", err
+	}
 
-    newImage := resize.Resize(imageParameters.Width, imageParameters.Height, img, resize.NearestNeighbor)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", errors.New("Error creating new image")
-    }
+	img, err = imageHandler.Decode(reader)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", errors.New("Error decoding response")
+	}
 
-    // Encode new image
-    err = imageHandler.Encode(newFileImg, newImage)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", errors.New("Error encoding response")
-    }
-    newFileImg.Close()
+	newImage := resize.Resize(imageParameters.Width, imageParameters.Height, img, resize.NearestNeighbor)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", errors.New("Error creating new image")
+	}
 
-    err = imageHandler.Convert(newImageTempPath, imageParameters.Quality)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", err
-    }
+	if imageParameters.Convert != "" {
+		responseType, err = extensionToImageType(imageParameters.Convert)
+		if err != nil {
+			os.Remove(newImageTempPath)
+			return "", "", errors.New("Error while converting image handler")
+		}
 
-    err = os.Rename(newImageTempPath, newImageRealPath)
-    if err != nil {
-        os.Remove(newImageTempPath)
-        return "", "", errors.New("Error moving file")
-    }
+		imageHandler, err = NewImageHandler(responseType)
+		if err != nil {
+			os.Remove(newImageTempPath)
+			return "", "", errors.New("Error while converting image handler")
+		}
+	}
 
-    return newImageRealPath, responseType, nil
+	// Encode new image
+	err = imageHandler.Encode(newFileImg, newImage)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", errors.New("Error encoding response")
+	}
+	newFileImg.Close()
+
+	err = imageHandler.Optimize(newImageTempPath, imageParameters.Quality)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", err
+	}
+
+	err = os.Rename(newImageTempPath, newImageRealPath)
+	if err != nil {
+		os.Remove(newImageTempPath)
+		return "", "", errors.New("Error moving file")
+	}
+
+	return newImageRealPath, responseType, nil
 
 }
 
 func BuildResponse(w http.ResponseWriter, imagePath string, contentType string) error {
-    img, err := os.Open(imagePath)
-    if err != nil {
-        return errors.New("Error reading from optimized file")
-    }
-    defer img.Close()
-    w.Header().Set("Content-Type", contentType) // <-- set the content-type header
-    io.Copy(w, img)
-    return nil
+	img, err := os.Open(imagePath)
+	if err != nil {
+		return errors.New("Error reading from optimized file")
+	}
+	defer img.Close()
+	w.Header().Set("Content-Type", contentType) // <-- set the content-type header
+	io.Copy(w, img)
+	return nil
 }
