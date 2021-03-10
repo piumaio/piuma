@@ -13,7 +13,7 @@ RUN cd ${SOURCE_DIR} && \
 FROM alpine:3.10.2
 
 # Install OptiPNG and JPEGOptim
-RUN apk add --update --no-cache optipng jpegoptim
+RUN apk add --update --no-cache optipng jpegoptim libwebp
 
 WORKDIR /root/
 COPY --from=0 /app .

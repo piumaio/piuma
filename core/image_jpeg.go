@@ -11,6 +11,7 @@ import (
 )
 
 type JPEGHandler struct {
+	AdvancedImageHandler
 }
 
 func (j *JPEGHandler) ImageType() string {

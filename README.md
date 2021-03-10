@@ -52,25 +52,53 @@ Above command will run Piuma on ```http://localhost:8080``` and it's going to st
 
 ## Usage
 
-    https://yourpiumahost/Options/Image_URL
+```
+https://yourpiumahost/Options/Image_URL
+```
 
 Where options are values separated by `_`
 
-    width_height_quality
+```
+width_height_quality
+```
+
+or
+
+```
+width_height_quality:optional_image_format
+```
 
 Where `quality` is a value between 0 and 100.
 
 To get your image resized to 100 x 100:
 
-    https://yourpiumahost/100_100/<Image_URL>
+```
+https://yourpiumahost/100_100/<Image_URL>
+```
 
 If you want to specify only the `width`, you'll get a new image keeping the ratio:
 
-    https://yourpiumahost/100/<Image_URL>
+```
+https://yourpiumahost/100/<Image_URL>
+```
 
 If you want to specify only the `height`
 
-    https://yourpiumahost/0_100/<Image_URL>
+```
+https://yourpiumahost/0_100/<Image_URL>
+```
+
+If you want to convert the image to a specific format add a `:image_extension` 
+where `image_extension` can be one of the following:
+
+* `jpg` or `jpeg` for [JPEG](https://en.wikipedia.org/wiki/JPEG)
+* `png` for [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics)
+* `webp` for [WebP](https://en.wikipedia.org/wiki/WebP)
+* `webp_lossless` same as `webp` but with lossless conversion
+
+```
+https://yourpiumahost/0_0_100:webp/<Image_URL>
+```
 
 ## Running tests
 To run the unit tests, change to the directory with tests (files ending with ```_test.go``` contain unit tests) and run:

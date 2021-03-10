@@ -40,14 +40,20 @@ func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp stri
 
 	// Check if file exists
 	if _, err := os.Stat(newImageRealPath); err == nil {
+		var imageHandler ImageHandler
 		if imageParameters.Convert != "" {
-			responseType, err = extensionToImageType(imageParameters.Convert)
+			imageHandler, err = NewImageHandlerByExtension(imageParameters.Convert)
+			if err != nil {
+				return "", "", err
+			}
+		} else {
+			imageHandler, err = NewImageHandler(responseType)
 			if err != nil {
 				return "", "", err
 			}
 		}
 
-		return newImageRealPath, responseType, nil
+		return newImageRealPath, imageHandler.ImageType(), nil
 	}
 
 	// Decode and resize
@@ -85,31 +91,31 @@ func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp stri
 	}
 
 	if imageParameters.Convert != "" {
-		responseType, err = extensionToImageType(imageParameters.Convert)
-		if err != nil {
-			os.Remove(newImageTempPath)
-			return "", "", errors.New("Error while converting image handler")
-		}
-
-		imageHandler, err = NewImageHandler(responseType)
+		imageHandler, err = NewImageHandlerByExtension(imageParameters.Convert)
 		if err != nil {
 			os.Remove(newImageTempPath)
 			return "", "", errors.New("Error while converting image handler")
 		}
 	}
 
-	// Encode new image
-	err = imageHandler.Encode(newFileImg, newImage)
-	if err != nil {
-		os.Remove(newImageTempPath)
-		return "", "", errors.New("Error encoding response")
-	}
-	newFileImg.Close()
+	_, isFast := imageHandler.(FastImageHandler)
+	if isFast {
+		imageHandler.(FastImageHandler).Encode(newFileImg, newImage, imageParameters.Quality)
+	} else {
+		advImageHandler := imageHandler.(AdvancedImageHandler)
 
-	err = imageHandler.Optimize(newImageTempPath, imageParameters.Quality)
-	if err != nil {
-		os.Remove(newImageTempPath)
-		return "", "", err
+		err = advImageHandler.Encode(newFileImg, newImage)
+		if err != nil {
+			os.Remove(newImageTempPath)
+			return "", "", errors.New("Error encoding response")
+		}
+		newFileImg.Close()
+
+		err = advImageHandler.Optimize(newImageTempPath, imageParameters.Quality)
+		if err != nil {
+			os.Remove(newImageTempPath)
+			return "", "", err
+		}
 	}
 
 	err = os.Rename(newImageTempPath, newImageRealPath)
@@ -118,8 +124,7 @@ func Optimize(originalUrl string, imageParameters ImageParameters, pathtemp stri
 		return "", "", errors.New("Error moving file")
 	}
 
-	return newImageRealPath, responseType, nil
-
+	return newImageRealPath, imageHandler.ImageType(), nil
 }
 
 func BuildResponse(w http.ResponseWriter, imagePath string, contentType string) error {

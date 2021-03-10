@@ -10,6 +10,7 @@ import (
 )
 
 type PNGHandler struct {
+	AdvancedImageHandler
 }
 
 func (p *PNGHandler) ImageType() string {
