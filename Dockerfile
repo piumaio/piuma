@@ -3,11 +3,11 @@ WORKDIR /app
 ENV SOURCE_DIR=/go/src/github.com/piumaio/piuma
 ADD . ${SOURCE_DIR}
 
-RUN apk add --update --no-cache git
+RUN apk add --update --no-cache git build-base
 
 RUN cd ${SOURCE_DIR} && \
   go get -u && \
-  CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o app && \
+  CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o app && \
   cp app /app
 
 FROM alpine:3.10.2
