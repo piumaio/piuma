@@ -16,10 +16,10 @@ import (
 
 var pathtemp string
 var pathmedia string
+var timeout int
 
 func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
-	var response *http.Response
 	imageURL := ps.ByName("url")[1:]
 	parameters := ps.ByName("parameters")
 
@@ -28,24 +28,27 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("[ERROR]: parsing parameters [ %s ] : [ %s ]\n", parameters, err)
 	}
 
-	img, contentType, err := core.Optimize(imageURL, imageParameters, pathtemp, pathmedia)
+	image, err := core.DownloadImage(imageURL)
 	if err != nil {
-		fmt.Printf("[ERROR]: optimizing image [ %s ]\n", err)
+		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
+	}
+
+	img, contentType, err := core.Dispatch(image, &imageParameters, &core.Options{pathtemp, pathmedia, timeout})
+	if err != nil {
+		if err.Error() != "Timed out" {
+			fmt.Printf("[ERROR]: optimizing image [ %s ]\n", err)
+		}
 	} else {
 		err = core.BuildResponse(w, img, contentType)
 	}
 
 	if err != nil {
-		response, err = http.Get(imageURL)
-		if err != nil {
-			log.Printf("[ERROR]: downloading file [ %s ] - [ %s ]\n", imageURL, err)
-		} else {
-			var reader io.Reader = response.Body
-			contentType = response.Header.Get("Content-Type")
-			w.Header().Set("Content-Type", contentType) // <-- set the content-type header
-			io.Copy(w, reader)
-		}
+		contentType = image.Header.Get("Content-Type")
+		w.Header().Set("Content-Type", contentType) // <-- set the content-type header
+		io.Copy(w, image.Body)
 	}
+
+	image.Body.Close()
 }
 
 func init() {
@@ -64,6 +67,7 @@ func main() {
 
 	flag.StringVar(&port, "port", port, "Port where piuma will run")
 	flag.StringVar(&pathmedia, "mediapath", filepath.Join(usr.HomeDir, ".piuma", "media"), "Media path")
+	flag.IntVar(&timeout, "timeout", 0, "Maximum time to wait for image elaboration")
 
 	flag.Parse()
 
