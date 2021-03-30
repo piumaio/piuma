@@ -26,11 +26,13 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	imageParameters, err := core.Parser(parameters)
 	if err != nil {
 		log.Printf("[ERROR]: parsing parameters [ %s ] : [ %s ]\n", parameters, err)
+		return
 	}
 
 	image, err := core.DownloadImage(imageURL)
 	if err != nil {
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
+		return
 	}
 
 	img, contentType, err := core.Dispatch(image, &imageParameters, &core.Options{pathtemp, pathmedia, timeout})
