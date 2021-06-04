@@ -32,28 +32,19 @@ func Dispatch(response *http.Response, imageParameters *ImageParameters, options
 
 	// Get Hash Name
 	hash := sha1.New()
-	hash.Write([]byte(fmt.Sprint(imageParameters.prepareHashData(), response.Request.URL.String(), responseType, size, lastModified)))
+	hash.Write([]byte(fmt.Sprint(imageParameters.PrepareHashData(), response.Request.URL.String(), responseType, size, lastModified)))
 	newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
 	newImageTempPath := filepath.Join(options.PathTemp, newFileName)
 	newImageRealPath := filepath.Join(options.PathMedia, newFileName)
 
 	// Check if file exists
-	if _, err := os.Stat(newImageRealPath); err == nil {
-		var imageHandler ImageHandler
-		if imageParameters.Convert != "" {
-			imageHandler, err = NewImageHandlerByExtension(imageParameters.Convert)
-			if err != nil {
-				return "", "", err
-			}
-		} else {
-			imageHandler, err = NewImageHandler(responseType)
-			if err != nil {
-				return "", "", err
-			}
+	if file, err := os.Open(newImageRealPath); err == nil {
+		defer file.Close()
+		imageHandler, err := NewImageHandlerByBytes(file)
+		if err == nil {
+			return newImageRealPath, imageHandler.ImageType(), nil
 		}
-
-		return newImageRealPath, imageHandler.ImageType(), nil
 	}
 
 	if _, loaded := FileMutex.LoadOrStore(newImageTempPath, true); loaded {

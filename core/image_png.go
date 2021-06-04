@@ -5,12 +5,13 @@ import (
 	"image"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 )
 
 type PNGHandler struct {
-	AdvancedImageHandler
+	ImageHandler
 }
 
 func (p *PNGHandler) ImageType() string {
@@ -25,20 +26,33 @@ func (p *PNGHandler) Decode(reader io.Reader) (image.Image, error) {
 	return png.Decode(reader)
 }
 
-func (p *PNGHandler) Encode(newImgFile *os.File, newImage image.Image) error {
-	return png.Encode(newImgFile, newImage)
-}
+func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
+	file, err := ioutil.TempFile("", "png_image")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	defer os.Remove(file.Name())
 
-func (p *PNGHandler) Optimize(newImageTempPath string, quality uint) error {
-	var err error
-	var cmd *exec.Cmd
+	err = png.Encode(file, newImage)
+	if err != nil {
+		return err
+	}
 
-	default_args := []string{newImageTempPath}
-
-	cmd = exec.Command("optipng", default_args...)
+	args := []string{file.Name()}
+	cmd := exec.Command("optipng", args...)
 	err = cmd.Run()
 	if err != nil {
 		return errors.New("OptiPNG command not working")
+	}
+
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(newImgFile, file)
+	if err != nil {
+		return err
 	}
 
 	return nil

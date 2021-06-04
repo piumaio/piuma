@@ -1,7 +1,11 @@
 package core
 
 import (
+	"bytes"
 	"errors"
+	"io"
+	"log"
+	"math"
 	"net/http"
 	"os"
 
@@ -19,6 +23,11 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 
 	file, err := os.Open(options.PathTemp)
 	defer file.Close()
+	if err != nil {
+		os.Remove(options.PathTemp)
+		return "", "", err
+	}
+	fileStat, err := file.Stat()
 	if err != nil {
 		os.Remove(options.PathTemp)
 		return "", "", err
@@ -44,38 +53,43 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 		}
 	}
 
-	finalFile, err := os.Create(options.PathTemp)
-	defer file.Close()
-	if err != nil {
-		os.Remove(options.PathTemp)
-		return "", "", err
+	var newFileBuffer bytes.Buffer
+	if imageParameters.AdaptiveQuality {
+		err = CompressByDSSIM(&newImage, &newFileBuffer, &imageHandler, math.Abs(float64(imageParameters.Quality)-100)/10000)
+	} else {
+		err = imageHandler.Encode(&newFileBuffer, newImage, imageParameters.Quality)
 	}
 
-	_, isFast := imageHandler.(FastImageHandler)
-	if isFast {
-		imageHandler.(FastImageHandler).Encode(finalFile, newImage, imageParameters.Quality)
-	} else {
-		advImageHandler := imageHandler.(AdvancedImageHandler)
+	if fileStat.Size() > int64(newFileBuffer.Len()) {
+		defer os.Remove(options.PathTemp)
 
-		err = advImageHandler.Encode(finalFile, newImage)
+		newFile, err := os.Create(options.PathMedia)
 		if err != nil {
-			os.Remove(options.PathTemp)
-			return "", "", errors.New("Error encoding response")
+			return "", "", err
 		}
-		finalFile.Close()
+		defer newFile.Close()
 
-		err = advImageHandler.Optimize(options.PathTemp, imageParameters.Quality)
+		_, err = io.Copy(newFile, &newFileBuffer)
+		if err != nil {
+			return "", "", err
+		}
+
+		return options.PathMedia, imageHandler.ImageType(), nil
+	} else {
+		log.Printf("[%s] [%s] Elaborated image is bigger than original, going back to original...\n", imageParameters.GetUrlString(), response.Request.URL)
+
+		err = os.Rename(options.PathTemp, options.PathMedia)
 		if err != nil {
 			os.Remove(options.PathTemp)
 			return "", "", err
 		}
-	}
 
-	err = os.Rename(options.PathTemp, options.PathMedia)
-	if err != nil {
-		os.Remove(options.PathTemp)
-		return "", "", errors.New("Error moving file")
-	}
+		imageHandler, err := NewImageHandler(responseType)
+		if err != nil {
+			os.Remove(options.PathTemp)
+			return "", "", err
+		}
 
-	return options.PathMedia, imageHandler.ImageType(), nil
+		return options.PathMedia, imageHandler.ImageType(), nil
+	}
 }

@@ -6,12 +6,13 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 )
 
 type JPEGHandler struct {
-	AdvancedImageHandler
+	ImageHandler
 }
 
 func (j *JPEGHandler) ImageType() string {
@@ -26,16 +27,33 @@ func (j *JPEGHandler) Decode(reader io.Reader) (image.Image, error) {
 	return jpeg.Decode(reader)
 }
 
-func (j *JPEGHandler) Encode(newImgFile *os.File, newImage image.Image) error {
-	return jpeg.Encode(newImgFile, newImage, nil)
-}
+func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
+	file, err := ioutil.TempFile("", "jpeg_image")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	defer os.Remove(file.Name())
 
-func (j *JPEGHandler) Optimize(newImageTempPath string, quality uint) error {
-	args := []string{fmt.Sprintf("--max=%d", quality), newImageTempPath}
+	err = jpeg.Encode(file, newImage, nil)
+	if err != nil {
+		return err
+	}
+
+	args := []string{fmt.Sprintf("--max=%d", quality), file.Name()}
 	cmd := exec.Command("jpegoptim", args...)
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return errors.New("Jpegoptim command not working")
+	}
+
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(newImgFile, file)
+	if err != nil {
+		return err
 	}
 
 	return nil

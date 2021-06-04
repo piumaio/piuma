@@ -1,27 +1,18 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"io"
-	"os"
+	"net/http"
 )
 
 type ImageHandler interface {
 	ImageType() string
 	ImageExtension() string
 	Decode(reader io.Reader) (image.Image, error)
-}
-
-type AdvancedImageHandler interface {
-	ImageHandler
-	Encode(newImgFile *os.File, newImage image.Image) error
-	Optimize(newImageTempPath string, quality uint) error
-}
-
-type FastImageHandler interface {
-	ImageHandler
-	Encode(newImgFile *os.File, newImage image.Image, quality uint) error
+	Encode(newImgFile io.Writer, newImage image.Image, quality uint) error
 }
 
 func NewImageHandler(imageType string) (ImageHandler, error) {
@@ -32,6 +23,8 @@ func NewImageHandler(imageType string) (ImageHandler, error) {
 		return &PNGHandler{}, nil
 	case "image/webp":
 		return &WebPHandler{}, nil
+	case "image/avif":
+		return &AvifHandler{}, nil
 	default:
 		return nil, errors.New("Unsupported Image type")
 	}
@@ -49,7 +42,27 @@ func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
 		return &WebPLosslessHandler{}, nil
 	case "webp":
 		return &WebPHandler{}, nil
+	case "avif":
+		return &AvifHandler{}, nil
 	default:
 		return nil, errors.New("Unsupported Extension")
+	}
+}
+
+func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
+	firstBytes := make([]byte, 512)
+	_, err := buffer.Read(firstBytes)
+	if err != nil {
+		return nil, errors.New("Unsupported Extension")
+	}
+	contentType := http.DetectContentType(firstBytes)
+
+	if contentType == "application/octet-stream" {
+		if bytes.Compare(firstBytes[8:12], []byte("avif")) == 0 {
+			return &AvifHandler{}, nil
+		}
+		return nil, errors.New("Unsupported Extension")
+	} else {
+		return NewImageHandler(contentType)
 	}
 }

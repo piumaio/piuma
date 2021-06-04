@@ -8,14 +8,26 @@ import (
 
 // ImageParameters represents the parameters for optimization
 type ImageParameters struct {
-	Width   uint
-	Height  uint
-	Quality uint
-	Convert string
+	Width           uint
+	Height          uint
+	Quality         uint
+	AdaptiveQuality bool
+	Convert         string
 }
 
-func (imParams *ImageParameters) prepareHashData() string {
-	return fmt.Sprint(imParams.Width, imParams.Height, imParams.Quality, imParams.Convert)
+func (imParams *ImageParameters) PrepareHashData() string {
+	return fmt.Sprint(imParams.Width, imParams.Height, imParams.Quality, imParams.AdaptiveQuality, imParams.Convert)
+}
+
+func (imParams *ImageParameters) GetUrlString() string {
+	urlString := fmt.Sprintf("%d_%d_%d", imParams.Width, imParams.Height, imParams.Quality)
+	if imParams.AdaptiveQuality {
+		urlString += "a"
+	}
+	if imParams.Convert != "" {
+		urlString += fmt.Sprintf(":%s", imParams.Convert)
+	}
+	return urlString
 }
 
 // Parser extracts width, height and quality from the provided parameters.
@@ -28,9 +40,16 @@ func Parser(name string) (ImageParameters, error) {
 
 	var err error
 	var tmpr int
+	isQualityAdaptive := false
 
 	for i := 0; i < len(dimQualityArray); i++ {
-		tmpr, err = strconv.Atoi(dimQualityArray[i])
+		data := dimQualityArray[i]
+		if i == 2 && strings.HasSuffix(data, "a") {
+			lenData := len(data)
+			data = data[:lenData-1]
+			isQualityAdaptive = true
+		}
+		tmpr, err = strconv.Atoi(data)
 		if err != nil {
 			return ImageParameters{}, err
 		}
@@ -43,10 +62,11 @@ func Parser(name string) (ImageParameters, error) {
 	}
 
 	parameters := ImageParameters{
-		Width:   arrayOfInt[0],
-		Height:  arrayOfInt[1],
-		Quality: arrayOfInt[2],
-		Convert: convertTo,
+		Width:           arrayOfInt[0],
+		Height:          arrayOfInt[1],
+		Quality:         arrayOfInt[2],
+		AdaptiveQuality: isQualityAdaptive,
+		Convert:         convertTo,
 	}
 	return parameters, nil
 }
