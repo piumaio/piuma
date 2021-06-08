@@ -19,6 +19,10 @@ func (w *WebPHandler) ImageExtension() string {
 	return "webp"
 }
 
+func (w *WebPHandler) SupportsTransparency() bool {
+	return true
+}
+
 func (w *WebPHandler) Decode(reader io.Reader) (image.Image, error) {
 	return webp.Decode(reader)
 }

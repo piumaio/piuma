@@ -23,6 +23,10 @@ func (j *JPEGHandler) ImageExtension() string {
 	return "jpg"
 }
 
+func (j *JPEGHandler) SupportsTransparency() bool {
+	return false
+}
+
 func (j *JPEGHandler) Decode(reader io.Reader) (image.Image, error) {
 	return jpeg.Decode(reader)
 }

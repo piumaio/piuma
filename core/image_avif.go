@@ -23,6 +23,10 @@ func (a *AvifHandler) ImageExtension() string {
 	return "avif"
 }
 
+func (a *AvifHandler) SupportsTransparency() bool {
+	return true
+}
+
 func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	avifFile, err := ioutil.TempFile("", "dec_image*.avif")
 	if err != nil {

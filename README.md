@@ -100,6 +100,7 @@ where `image_extension` can be one of the following:
 * `webp` for [WebP](https://en.wikipedia.org/wiki/WebP)
 * `webp_lossless` same as `webp` but with lossless conversion
 * `avif` for [AVIF](https://en.wikipedia.org/wiki/AV1#AV1_Image_File_Format_(AVIF))
+* `auto` that chooses the best supported image format by parsing the `Accept` request header
 
 ```
 https://yourpiumahost/0_0_100:webp/<Image_URL>

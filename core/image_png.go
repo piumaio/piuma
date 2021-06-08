@@ -22,6 +22,10 @@ func (p *PNGHandler) ImageExtension() string {
 	return "png"
 }
 
+func (p *PNGHandler) SupportsTransparency() bool {
+	return true
+}
+
 func (p *PNGHandler) Decode(reader io.Reader) (image.Image, error) {
 	return png.Decode(reader)
 }

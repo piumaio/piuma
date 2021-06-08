@@ -17,6 +17,8 @@ import (
 var pathtemp string
 var pathmedia string
 var timeout int
+var httpCacheTTL int
+var httpCachePurgeInterval int
 
 func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
@@ -29,13 +31,13 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	image, err := core.DownloadImage(imageURL)
+	image, err := core.DownloadImage(imageURL, httpCacheTTL)
 	if err != nil {
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
 		return
 	}
 
-	img, contentType, err := core.Dispatch(image, &imageParameters, &core.Options{pathtemp, pathmedia, timeout})
+	img, contentType, err := core.Dispatch(r, image, &imageParameters, &core.Options{pathtemp, pathmedia, timeout})
 	if err != nil {
 		if err.Error() != "Timed out" {
 			fmt.Printf("[ERROR]: optimizing image [ %s ]\n", err)
@@ -69,7 +71,9 @@ func main() {
 
 	flag.StringVar(&port, "port", port, "Port where piuma will run")
 	flag.StringVar(&pathmedia, "mediapath", filepath.Join(usr.HomeDir, ".piuma", "media"), "Media path")
-	flag.IntVar(&timeout, "timeout", 0, "Maximum time to wait for image elaboration")
+	flag.IntVar(&timeout, "timeout", 0, "Maximum time to wait for image elaboration (in seconds)")
+	flag.IntVar(&httpCacheTTL, "httpCacheTTL", 3600, "Time To Live (in seconds) for HTTP Response Cache")
+	flag.IntVar(&httpCachePurgeInterval, "httpCachePurgeInterval", 3600, "Interval for deleting unused cache (in seconds)")
 
 	flag.Parse()
 
@@ -77,8 +81,13 @@ func main() {
 
 	os.MkdirAll(pathtemp, os.ModePerm)
 	os.MkdirAll(pathmedia, os.ModePerm)
+	os.MkdirAll(filepath.Join(os.TempDir(), "piuma_http_cache"), os.ModePerm)
 
 	router := httprouter.New()
 	router.GET("/:parameters/*url", Manager)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+
+	stopPurgeChan := core.StartHttpCachePurge(httpCachePurgeInterval)
+	err = http.ListenAndServe(":"+port, router)
+	stopPurgeChan <- true
+	log.Fatal(err)
 }
