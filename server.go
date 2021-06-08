@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -20,7 +21,7 @@ var timeout int
 var httpCacheTTL int
 var httpCachePurgeInterval int
 
-func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
 	imageURL := ps.ByName("url")[1:]
 	parameters := ps.ByName("parameters")
@@ -55,6 +56,19 @@ func Manager(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	image.Body.Close()
 }
 
+func getInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var data = map[string]interface{}{
+		"extensions": map[string]string{},
+	}
+
+	for _, v := range core.GetAllImageHandlers() {
+		data["extensions"].(map[string]string)[v.ImageType()] = v.ImageExtension()
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
 func init() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime | log.Lmicroseconds)
@@ -84,7 +98,8 @@ func main() {
 	os.MkdirAll(filepath.Join(os.TempDir(), "piuma_http_cache"), os.ModePerm)
 
 	router := httprouter.New()
-	router.GET("/:parameters/*url", Manager)
+	router.GET("/", getInfo)
+	router.GET("/:parameters/*url", processImage)
 
 	stopPurgeChan := core.StartHttpCachePurge(httpCachePurgeInterval)
 	err = http.ListenAndServe(":"+port, router)

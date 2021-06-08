@@ -10,6 +10,13 @@ import (
 	"github.com/elnormous/contenttype"
 )
 
+var imageHandlers = map[string]ImageHandler{
+	"image/jpeg": &JPEGHandler{},
+	"image/png":  &PNGHandler{},
+	"image/webp": &WebPHandler{},
+	"image/avif": &AvifHandler{},
+}
+
 type ImageHandler interface {
 	ImageType() string
 	ImageExtension() string
@@ -19,18 +26,10 @@ type ImageHandler interface {
 }
 
 func NewImageHandler(imageType string) (ImageHandler, error) {
-	switch imageType {
-	case "image/jpeg":
-		return &JPEGHandler{}, nil
-	case "image/png":
-		return &PNGHandler{}, nil
-	case "image/webp":
-		return &WebPHandler{}, nil
-	case "image/avif":
-		return &AvifHandler{}, nil
-	default:
-		return nil, errors.New("Unsupported Image type")
+	if handler, ok := imageHandlers[imageType]; ok {
+		return handler, nil
 	}
+	return nil, errors.New("Unsupported Image type")
 }
 
 func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
@@ -95,4 +94,8 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response)
 	}
 
 	return imageHandler, nil
+}
+
+func GetAllImageHandlers() map[string]ImageHandler {
+	return imageHandlers
 }
