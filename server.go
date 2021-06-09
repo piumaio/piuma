@@ -57,6 +57,14 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 
 func getInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	var data = map[string]interface{}{
 		"extensions": map[string]string{},
 	}
