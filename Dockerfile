@@ -4,7 +4,7 @@
 # in default package.
 #
 
-FROM alpine:3.13 AS heif_build
+FROM alpine:3.14 AS heif_build
 RUN apk add --update --no-cache git build-base libjpeg-turbo-dev libpng-dev dav1d-dev cmake
 RUN apk add rav1e-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
@@ -15,7 +15,7 @@ ENV CPPFLAGS="-O2"
 ENV CXXFLAGS="-O2"
 RUN cd libheif && cmake . -DWITH_LIBDE265=OFF -DWITH_X265=OFF -DWITH_EXAMPLES=ON -DBUILD_SHARED_LIBS=OFF && make
 
-FROM golang:alpine3.13 AS build_piuma
+FROM golang:alpine3.14 AS build_piuma
 WORKDIR /app
 
 RUN apk add --update --no-cache git build-base pkgconfig
@@ -28,12 +28,11 @@ RUN cd ${SOURCE_DIR} && \
   CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o app && \
   cp app /app
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 # Install all required tools
-RUN apk add --update --no-cache optipng jpegoptim libwebp dav1d-dev libstdc++
+RUN apk add --update --no-cache optipng jpegoptim libwebp dav1d-dev libstdc++ dssim
 RUN apk add rav1e-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
-RUN apk add dssim --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
 COPY --from=heif_build /heif_build/libheif/examples/heif-* /usr/bin/
 
 WORKDIR /root/
