@@ -35,7 +35,7 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	file.Close()
 	defer os.Remove(file.Name())
 
 	err = png.Encode(file, newImage)
@@ -50,7 +50,7 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 		return errors.New("OptiPNG command not working")
 	}
 
-	_, err = file.Seek(0, 0)
+	file, err = os.Open(file.Name())
 	if err != nil {
 		return err
 	}
@@ -58,6 +58,7 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 	if err != nil {
 		return err
 	}
+	file.Close()
 
 	return nil
 }

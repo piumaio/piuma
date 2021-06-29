@@ -36,22 +36,22 @@ func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 	defer os.Remove(file.Name())
 
-	err = jpeg.Encode(file, newImage, nil)
+	err = jpeg.Encode(file, newImage, &jpeg.Options{Quality: int(quality)})
 	if err != nil {
 		return err
 	}
+	file.Close()
 
-	args := []string{fmt.Sprintf("--max=%d", quality), file.Name()}
+	args := []string{fmt.Sprintf("--max=%d", quality), "--all-progressive", "-s", "-o", file.Name()}
 	cmd := exec.Command("jpegoptim", args...)
 	err = cmd.Run()
 	if err != nil {
 		return errors.New("Jpegoptim command not working")
 	}
 
-	_, err = file.Seek(0, 0)
+	file, err = os.Open(file.Name())
 	if err != nil {
 		return err
 	}
@@ -59,6 +59,7 @@ func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	if err != nil {
 		return err
 	}
+	file.Close()
 
 	return nil
 }
