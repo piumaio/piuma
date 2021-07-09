@@ -20,6 +20,7 @@ var pathmedia string
 var timeout int
 var httpCacheTTL int
 var httpCachePurgeInterval int
+var workers int
 
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
@@ -96,6 +97,7 @@ func main() {
 	flag.IntVar(&timeout, "timeout", 0, "Maximum time to wait for image elaboration (in seconds)")
 	flag.IntVar(&httpCacheTTL, "httpCacheTTL", 3600, "Time To Live (in seconds) for HTTP Response Cache")
 	flag.IntVar(&httpCachePurgeInterval, "httpCachePurgeInterval", 3600, "Interval for deleting unused cache (in seconds)")
+	flag.IntVar(&workers, "workers", 4, "Number of workers to instantiate")
 
 	flag.Parse()
 
@@ -110,7 +112,12 @@ func main() {
 	router.GET("/:parameters/*url", processImage)
 
 	stopPurgeChan := core.StartHttpCachePurge(httpCachePurgeInterval)
+	core.GlobalWorkerManager = core.NewWorkerManager()
+	for i := 0; i < workers || i < 1; i++ {
+		core.GlobalWorkerManager.Run()
+	}
 	err = http.ListenAndServe(":"+port, router)
+	core.GlobalWorkerManager.Close()
 	stopPurgeChan <- true
 	log.Fatal(err)
 }
