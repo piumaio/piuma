@@ -45,11 +45,11 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 		return "", "", errors.New("Error creating new image")
 	}
 
-	if imageParameters.Convert != "" {
+	if imageParameters.Convert != "" && imageParameters.Convert != "default" {
 		imageHandler, err = NewImageHandlerByExtension(imageParameters.Convert)
 		if err != nil {
 			os.Remove(options.PathTemp)
-			return "", "", errors.New("Error while converting image handler")
+			return "", "", err
 		}
 	}
 
