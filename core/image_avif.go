@@ -48,10 +48,10 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	defer os.Remove(pngFile.Name())
 
 	args := []string{"-q 100", avifFile.Name(), pngFile.Name()}
-	cmd := exec.Command("heif-convert", args...)
+	cmd := exec.Command("avifdec", args...)
 	err = cmd.Run()
 	if err != nil {
-		return nil, errors.New("heif-convert command not working")
+		return nil, errors.New("avifdec command not working")
 	}
 
 	return png.Decode(pngFile)
@@ -77,11 +77,13 @@ func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	defer avifFile.Close()
 	defer os.Remove(avifFile.Name())
 
-	args := []string{"-A", "-v", "-q", fmt.Sprint(quality), "-o", avifFile.Name(), pngFile.Name()}
-	cmd := exec.Command("heif-enc", args...)
+	quality = (100 - quality) * 63 / 100
+
+	args := []string{"--min", fmt.Sprint(quality), "--max", fmt.Sprint(quality), "--minalpha", fmt.Sprint(quality), "--maxalpha", fmt.Sprint(quality), pngFile.Name(), avifFile.Name()}
+	cmd := exec.Command("avifenc", args...)
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("heif-enc command not working")
+		return errors.New("avifenc command not working")
 	}
 
 	_, err = io.Copy(newImgFile, avifFile)
