@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/nfnt/resize"
 )
@@ -54,42 +55,32 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 	}
 
 	var newFileBuffer bytes.Buffer
-	if imageParameters.AdaptiveQuality {
+	if imageParameters.AdaptiveQuality && imageHandler.ImageType() != "avif" {
 		err = CompressByDSSIM(&newImage, &newFileBuffer, &imageHandler, math.Abs(float64(imageParameters.Quality)-100)/10000)
 	} else {
 		err = imageHandler.Encode(&newFileBuffer, newImage, imageParameters.Quality)
 	}
 
-	if fileStat.Size() > int64(newFileBuffer.Len()) {
-		defer os.Remove(options.PathTemp)
+	if fileStat.Size() < int64(newFileBuffer.Len()) {
+		log.Printf("[%s] [%s] Elaborated image is bigger than original...\n", imageParameters.GetUrlString(), response.Request.URL)
 
-		newFile, err := os.Create(options.PathMedia)
-		if err != nil {
-			return "", "", err
-		}
-		defer newFile.Close()
-
-		_, err = io.Copy(newFile, &newFileBuffer)
-		if err != nil {
-			return "", "", err
-		}
-
-		return options.PathMedia, imageHandler.ImageType(), nil
-	} else {
-		log.Printf("[%s] [%s] Elaborated image is bigger than original, going back to original...\n", imageParameters.GetUrlString(), response.Request.URL)
-
-		err = os.Rename(options.PathTemp, options.PathMedia)
-		if err != nil {
-			os.Remove(options.PathTemp)
-			return "", "", err
-		}
-
-		imageHandler, err := NewImageHandler(responseType)
-		if err != nil {
-			os.Remove(options.PathTemp)
-			return "", "", err
-		}
-
-		return options.PathMedia, imageHandler.ImageType(), nil
+		imageParameters.Convert = "auto"
+		autoConfPath := path.Join(path.Dir(options.PathMedia), imageParameters.GenerateHash(response))
+		RemoveImageHandlerFromAutoConf(autoConfPath, imageHandler.ImageType())
 	}
+
+	defer os.Remove(options.PathTemp)
+
+	newFile, err := os.Create(options.PathMedia)
+	if err != nil {
+		return "", "", err
+	}
+	defer newFile.Close()
+
+	_, err = io.Copy(newFile, &newFileBuffer)
+	if err != nil {
+		return "", "", err
+	}
+
+	return options.PathMedia, imageHandler.ImageType(), nil
 }

@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -31,22 +30,16 @@ var FileMutex sync.Map
 var HttpCacheMutex sync.Map
 
 func Dispatch(request *http.Request, response *http.Response, imageParameters *ImageParameters, options *Options) (string, string, error) {
-	responseType := response.Header.Get("Content-Type")
-	size := response.Header.Get("Content-Length")
-	lastModified := response.Header.Get("Last-Modified")
-
 	if imageParameters.Convert == "auto" {
-		imageHandler, err := AutoImageHandler(request, response)
+		autoConfPath := filepath.Join(options.PathMedia, imageParameters.GenerateHash(response))
+		imageHandler, err := AutoImageHandler(request, response, autoConfPath)
 		if err != nil {
 			return "", "", err
 		}
 		imageParameters.Convert = imageHandler.ImageExtension()
 	}
 
-	// Get Hash Name
-	hash := sha1.New()
-	hash.Write([]byte(fmt.Sprint(imageParameters.PrepareHashData(), response.Request.URL.String(), responseType, size, lastModified)))
-	newFileName := base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	newFileName := imageParameters.GenerateHash(response)
 
 	newImageTempPath := filepath.Join(options.PathTemp, newFileName)
 	newImageRealPath := filepath.Join(options.PathMedia, newFileName)

@@ -1,7 +1,10 @@
 package core
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -15,8 +18,14 @@ type ImageParameters struct {
 	Convert         string
 }
 
-func (imParams *ImageParameters) PrepareHashData() string {
-	return fmt.Sprint(imParams.Width, imParams.Height, imParams.Quality, imParams.AdaptiveQuality, imParams.Convert)
+func (imParams *ImageParameters) GenerateHash(response *http.Response) string {
+	responseType := response.Header.Get("Content-Type")
+	size := response.Header.Get("Content-Length")
+	lastModified := response.Header.Get("Last-Modified")
+
+	hash := sha1.New()
+	hash.Write([]byte(fmt.Sprint(imParams.Width, imParams.Height, imParams.Quality, imParams.AdaptiveQuality, imParams.Convert, response.Request.URL.String(), responseType, size, lastModified)))
+	return base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }
 
 func (imParams *ImageParameters) GetUrlString() string {

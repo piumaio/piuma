@@ -2,10 +2,12 @@ package core
 
 import (
 	"bytes"
+	"encoding/gob"
 	"errors"
 	"image"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/elnormous/contenttype"
 )
@@ -15,6 +17,15 @@ var imageHandlers = map[string]ImageHandler{
 	"image/png":  &PNGHandler{},
 	"image/webp": &WebPHandler{},
 	"image/avif": &AvifHandler{},
+}
+
+var imageHandlersbyExtension = map[string]ImageHandler{
+	"jpeg":          &JPEGHandler{},
+	"jpg":           &JPEGHandler{},
+	"png":           &PNGHandler{},
+	"webp_lossless": &WebPLosslessHandler{},
+	"webp":          &WebPHandler{},
+	"avif":          &AvifHandler{},
 }
 
 type ImageHandler interface {
@@ -33,22 +44,10 @@ func NewImageHandler(imageType string) (ImageHandler, error) {
 }
 
 func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
-	switch extension {
-	case "jpeg":
-		return &JPEGHandler{}, nil
-	case "jpg":
-		return &JPEGHandler{}, nil
-	case "png":
-		return &PNGHandler{}, nil
-	case "webp_lossless":
-		return &WebPLosslessHandler{}, nil
-	case "webp":
-		return &WebPHandler{}, nil
-	case "avif":
-		return &AvifHandler{}, nil
-	default:
-		return nil, errors.New("Unsupported Extension")
+	if handler, ok := imageHandlersbyExtension[extension]; ok {
+		return handler, nil
 	}
+	return nil, errors.New("Unsupported Extension")
 }
 
 func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
@@ -69,19 +68,31 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	}
 }
 
-func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response) (ImageHandler, error) {
+func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response, autoConfPath string) (ImageHandler, error) {
 	imageHandler, err := NewImageHandler(imageResponse.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
 	}
 
-	availableMediaTypes := []contenttype.MediaType{
-		contenttype.NewMediaType("image/png"),
-		contenttype.NewMediaType("image/webp"),
-		contenttype.NewMediaType("image/avif"),
-	}
-	if !imageHandler.SupportsTransparency() {
-		availableMediaTypes = append([]contenttype.MediaType{contenttype.NewMediaType("image/jpeg")}, availableMediaTypes...)
+	var availableMediaTypes []contenttype.MediaType
+
+	if file, err := os.Open(autoConfPath); err == nil {
+		dec := gob.NewDecoder(file)
+		dec.Decode(&availableMediaTypes)
+	} else {
+		availableMediaTypes = []contenttype.MediaType{
+			contenttype.NewMediaType("image/png"),
+			contenttype.NewMediaType("image/webp"),
+			contenttype.NewMediaType("image/avif"),
+		}
+		if !imageHandler.SupportsTransparency() {
+			availableMediaTypes = append([]contenttype.MediaType{contenttype.NewMediaType("image/jpeg")}, availableMediaTypes...)
+		}
+
+		if file, err := os.Create(autoConfPath); err == nil {
+			enc := gob.NewEncoder(file)
+			enc.Encode(availableMediaTypes)
+		}
 	}
 
 	accepted, _, err := contenttype.GetAcceptableMediaType(clientRequest, availableMediaTypes)
@@ -96,6 +107,36 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response)
 	return imageHandler, nil
 }
 
+func RemoveImageHandlerFromAutoConf(autoConfPath string, imageType string) error {
+	var availableMediaTypes []contenttype.MediaType
+	var err error
+
+	if file, err := os.Open(autoConfPath); err == nil {
+		dec := gob.NewDecoder(file)
+		dec.Decode(&availableMediaTypes)
+
+		temp := availableMediaTypes[:0]
+		for _, x := range availableMediaTypes {
+			if x.String() != imageType {
+				temp = append(temp, x)
+			}
+		}
+		availableMediaTypes = temp
+	} else {
+		return err
+	}
+
+	if file, err := os.Create(autoConfPath); err == nil {
+		enc := gob.NewEncoder(file)
+		enc.Encode(availableMediaTypes)
+	}
+	return err
+}
+
 func GetAllImageHandlers() map[string]ImageHandler {
 	return imageHandlers
+}
+
+func GetAllImageHandlersByExtension() map[string]ImageHandler {
+	return imageHandlersbyExtension
 }
