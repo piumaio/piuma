@@ -21,6 +21,7 @@ var timeout int
 var httpCacheTTL int
 var httpCachePurgeInterval int
 var workers int
+var version string
 
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
@@ -68,6 +69,7 @@ func getInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var data = map[string]interface{}{
 		"extensions": map[string]string{},
+		"version":    version,
 	}
 
 	for _, v := range core.GetAllImageHandlers() {

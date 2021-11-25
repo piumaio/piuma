@@ -8,7 +8,7 @@ ADD . ${SOURCE_DIR}
 
 RUN cd ${SOURCE_DIR} && \
   go mod download && \
-  CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o app && \
+  CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w -X main.version=`git rev-parse HEAD`" -o app && \
   cp app /app
 
 FROM alpine:3.14
