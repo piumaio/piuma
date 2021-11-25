@@ -79,6 +79,7 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response,
 	if file, err := os.Open(autoConfPath); err == nil {
 		dec := gob.NewDecoder(file)
 		dec.Decode(&availableMediaTypes)
+		file.Close()
 	} else {
 		availableMediaTypes = []contenttype.MediaType{
 			contenttype.NewMediaType("image/png"),
@@ -92,6 +93,7 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response,
 		if file, err := os.Create(autoConfPath); err == nil {
 			enc := gob.NewEncoder(file)
 			enc.Encode(availableMediaTypes)
+			file.Close()
 		}
 	}
 
@@ -122,6 +124,7 @@ func RemoveImageHandlerFromAutoConf(autoConfPath string, imageType string) error
 			}
 		}
 		availableMediaTypes = temp
+		file.Close()
 	} else {
 		return err
 	}
@@ -129,6 +132,7 @@ func RemoveImageHandlerFromAutoConf(autoConfPath string, imageType string) error
 	if file, err := os.Create(autoConfPath); err == nil {
 		enc := gob.NewEncoder(file)
 		enc.Encode(availableMediaTypes)
+		file.Close()
 	}
 	return err
 }
