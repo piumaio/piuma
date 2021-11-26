@@ -61,6 +61,11 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 		err = imageHandler.Encode(&newFileBuffer, newImage, imageParameters.Quality)
 	}
 
+	defer os.Remove(options.PathTemp)
+	if err != nil {
+		return "", "", err
+	}
+
 	if fileStat.Size() < int64(newFileBuffer.Len()) {
 		log.Printf("[%s] [%s] Elaborated image is bigger than original...\n", imageParameters.GetUrlString(), response.Request.URL)
 
@@ -68,8 +73,6 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 		autoConfPath := path.Join(path.Dir(options.PathMedia), imageParameters.GenerateHash(response))
 		RemoveImageHandlerFromAutoConf(autoConfPath, imageHandler.ImageType())
 	}
-
-	defer os.Remove(options.PathTemp)
 
 	newFile, err := os.Create(options.PathMedia)
 	if err != nil {
