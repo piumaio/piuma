@@ -40,6 +40,9 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 		return "", "", errors.New("Error decoding response")
 	}
 
+	imageParameters.Width = uint(math.Min(float64(imageParameters.Width), float64(img.Bounds().Max.X)))
+	imageParameters.Height = uint(math.Min(float64(imageParameters.Height), float64(img.Bounds().Max.Y)))
+
 	newImage := resize.Resize(imageParameters.Width, imageParameters.Height, img, resize.NearestNeighbor)
 	if err != nil {
 		os.Remove(options.PathTemp)

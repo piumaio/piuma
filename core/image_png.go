@@ -35,13 +35,13 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 	if err != nil {
 		return err
 	}
-	file.Close()
 	defer os.Remove(file.Name())
 
 	err = png.Encode(file, newImage)
 	if err != nil {
 		return err
 	}
+	file.Close()
 
 	args := []string{file.Name()}
 	cmd := exec.Command("optipng", args...)
