@@ -74,7 +74,9 @@ func Optimize(response *http.Response, imageParameters *ImageParameters, options
 
 		imageParameters.Convert = "auto"
 		autoConfPath := path.Join(path.Dir(options.PathMedia), imageParameters.GenerateHash(response))
-		RemoveImageHandlerFromAutoConf(autoConfPath, imageHandler.ImageType())
+		if responseType != imageHandler.ImageType() {
+			RemoveImageHandlerFromAutoConf(autoConfPath, imageHandler.ImageType())
+		}
 	}
 
 	newFile, err := os.Create(options.PathMedia)
