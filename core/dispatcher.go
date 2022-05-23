@@ -12,6 +12,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,9 +31,13 @@ var FileMutex sync.Map
 var HttpCacheMutex sync.Map
 
 func Dispatch(request *http.Request, response *http.Response, imageParameters *ImageParameters, options *Options) (string, string, error) {
-	if imageParameters.Convert == "auto" {
+	if strings.HasPrefix(imageParameters.Convert, "auto") {
 		autoConfPath := filepath.Join(options.PathMedia, imageParameters.GenerateHash(response))
-		imageHandler, err := AutoImageHandler(request, response, autoConfPath)
+		preferredConverts := []string{}
+		if strings.HasPrefix(imageParameters.Convert, "auto:") {
+			preferredConverts = strings.Split(strings.Split(imageParameters.Convert, ":")[1], ",")
+		}
+		imageHandler, err := AutoImageHandler(request, response, autoConfPath, preferredConverts)
 		if err != nil {
 			return "", "", err
 		}

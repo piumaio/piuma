@@ -68,6 +68,10 @@ func Parser(name string) (ImageParameters, error) {
 	var convertTo string = ""
 	if len(dimqual) > 1 {
 		convertTo = dimqual[1]
+
+		if convertTo == "auto" && len(dimqual) > 2 {
+			convertTo = dimqual[1] + ":" + dimqual[2]
+		}
 	}
 
 	parameters := ImageParameters{

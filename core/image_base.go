@@ -68,7 +68,7 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	}
 }
 
-func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response, autoConfPath string) (ImageHandler, error) {
+func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response, autoConfPath string, preferredConverts []string) (ImageHandler, error) {
 	imageHandler, err := NewImageHandler(imageResponse.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
@@ -95,6 +95,25 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response,
 			enc.Encode(availableMediaTypes)
 			file.Close()
 		}
+	}
+
+	if len(preferredConverts) > 0 {
+		allowedConverts := make(map[string]bool)
+		allowedMediaTypes := []contenttype.MediaType{}
+
+		for _, c := range preferredConverts {
+			h, err := NewImageHandlerByExtension(c)
+			if err == nil {
+				allowedConverts[h.ImageType()] = true
+			}
+		}
+
+		for _, mt := range availableMediaTypes {
+			if _, ok := allowedConverts[mt.String()]; ok {
+				allowedMediaTypes = append(allowedMediaTypes, mt)
+			}
+		}
+		availableMediaTypes = allowedMediaTypes
 	}
 
 	accepted, _, err := contenttype.GetAcceptableMediaType(clientRequest, availableMediaTypes)
