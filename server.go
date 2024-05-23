@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/piumaio/piuma/core"
@@ -36,6 +37,7 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	image, err := core.DownloadImage(imageURL, httpCacheTTL)
 	if err != nil {
+		writeError(w, *image, err)
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
 		return
 	}
@@ -56,6 +58,22 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	image.Body.Close()
+}
+
+func writeError(w http.ResponseWriter, r http.Response, err error) {
+	var data = map[string]interface{}{
+		"error":  strings.ToUpper(err.Error()),
+		"detail": "",
+	}
+	if err.Error() == "invalid_status_code" {
+		w.WriteHeader(http.StatusNotFound)
+		data["detail"] = fmt.Sprintf("Original status code was: %d", r.StatusCode)
+	} else if err.Error() == "invalid_content_type" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		data["detail"] = fmt.Sprintf("Original Content-Type was: %s", r.Header.Get("Content-Type"))
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
 
 func getInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

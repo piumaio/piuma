@@ -106,6 +106,14 @@ func DownloadImage(originalUrl string, cacheDelay int) (*http.Response, error) {
 	if err != nil {
 		return nil, errors.New("Error downloading file " + originalUrl)
 	}
+	if response.StatusCode != 200 {
+		return response, errors.New("invalid_status_code")
+	}
+
+	if strings.Split(response.Header.Get("Content-Type"), "/")[0] != "image" {
+		return response, errors.New("invalid_content_type")
+	}
+
 	cacheData, err := httputil.DumpResponse(response, true)
 	if err != nil {
 		return response, nil
@@ -145,10 +153,14 @@ func StartHttpCachePurge(checkIntervalSeconds int) chan bool {
 func BuildResponse(w http.ResponseWriter, imagePath string, contentType string) error {
 	img, err := os.Open(imagePath)
 	if err != nil {
-		return errors.New("Error reading from optimized file")
+		return errors.New("error reading from optimized file")
 	}
 	defer img.Close()
 	w.Header().Set("Content-Type", contentType) // <-- set the content-type header
 	io.Copy(w, img)
 	return nil
+}
+
+func IsImage(response *http.Response) bool {
+	return strings.Contains(response.Header.Get("Content-Type"), "image/")
 }
