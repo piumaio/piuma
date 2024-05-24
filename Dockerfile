@@ -13,9 +13,18 @@ RUN cd ${SOURCE_DIR} && \
 
 FROM alpine:3.15
 
+ENV PORT=8080
+ENV MEDIA_DIR=~/.piuma/media
+ENV TIMEOUT=0
+ENV HTTP_CACHE_TTL=3600
+ENV HTTP_CACHE_PURGE_INTERVAL=3600
+ENV WORKERS=4
+ENV DOMAINS=""
+
+
 # Install all required tools
 RUN apk add --update --no-cache optipng jpegoptim libwebp libstdc++ dssim libavif-apps
 
 WORKDIR /root/
 COPY --from=build_piuma /app .
-ENTRYPOINT ["./app"]
+ENTRYPOINT ./app -port ${PORT} -mediapath ${MEDIA_DIR} -timeout ${TIMEOUT} -httpCacheTTL ${HTTP_CACHE_TTL} -httpCachePurgeInterval ${HTTP_CACHE_PURGE_INTERVAL} -workers ${WORKERS} -domains "${DOMAINS}"

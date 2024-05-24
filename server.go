@@ -23,6 +23,8 @@ var httpCacheTTL int
 var httpCachePurgeInterval int
 var workers int
 var version string
+var domains string
+var domains_list []string
 
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
@@ -34,8 +36,10 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		log.Printf("[ERROR]: parsing parameters [ %s ] : [ %s ]\n", parameters, err)
 		return
 	}
-
-	image, err := core.DownloadImage(imageURL, httpCacheTTL)
+	if len(domains_list) == 0 {
+		domains_list = []string{r.Host}
+	}
+	image, err := core.DownloadImage(imageURL, httpCacheTTL, domains_list)
 	if err != nil {
 		writeError(w, *image, err)
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
@@ -67,10 +71,13 @@ func writeError(w http.ResponseWriter, r http.Response, err error) {
 	}
 	if err.Error() == "invalid_status_code" {
 		w.WriteHeader(http.StatusNotFound)
-		data["detail"] = fmt.Sprintf("Original status code was: %d", r.StatusCode)
+		data["detail"] = fmt.Sprintf("Original status code was: %d.", r.StatusCode)
 	} else if err.Error() == "invalid_content_type" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		data["detail"] = fmt.Sprintf("Original Content-Type was: %s", r.Header.Get("Content-Type"))
+		data["detail"] = fmt.Sprintf("Original Content-Type was: %s.", r.Header.Get("Content-Type"))
+	} else if err.Error() == "invalid_domain" {
+		w.WriteHeader(http.StatusForbidden)
+		data["detail"] = fmt.Sprintf("Images from domain %s are not allowed.", r.Request.URL.Host)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
@@ -118,8 +125,17 @@ func main() {
 	flag.IntVar(&httpCacheTTL, "httpCacheTTL", 3600, "Time To Live (in seconds) for HTTP Response Cache")
 	flag.IntVar(&httpCachePurgeInterval, "httpCachePurgeInterval", 3600, "Interval for deleting unused cache (in seconds)")
 	flag.IntVar(&workers, "workers", 4, "Number of workers to instantiate")
+	flag.StringVar(&domains, "domains", "", "Allowed domains, separated by commas (e.g. domain1.com,domain2.com)")
 
 	flag.Parse()
+	log.Printf("Allowed domains: %s", domains)
+
+	if domains == "" {
+		log.Printf("[WARNING]: No allowed domains specified, using the current domain")
+		domains_list = []string{}
+	} else {
+		domains_list = strings.Split(domains, ",")
+	}
 
 	pathtemp = filepath.Join(pathmedia, "temp")
 

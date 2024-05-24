@@ -82,7 +82,32 @@ func Dispatch(request *http.Request, response *http.Response, imageParameters *I
 	return asyncOptimize(response, imageParameters, newOptions)
 }
 
-func DownloadImage(originalUrl string, cacheDelay int) (*http.Response, error) {
+func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string) (*http.Response, error) {
+
+	image_domain := strings.Split(originalUrl, "/")[2]
+	domain_is_valid := false
+
+	for _, domain := range allowed_domains {
+		if strings.HasPrefix(domain, "*") {
+			if strings.HasSuffix(image_domain, strings.TrimLeft(domain, "*")) {
+				domain_is_valid = true
+				break
+			}
+		} else if domain == image_domain {
+			domain_is_valid = true
+			break
+		}
+	}
+
+	if !domain_is_valid {
+		request, _ := http.NewRequest("GET", originalUrl, nil)
+		response := &http.Response{
+			Request:    request,
+			StatusCode: 403,
+		}
+		return response, errors.New("invalid_domain")
+	}
+
 	hash := sha1.New()
 	hash.Write([]byte(originalUrl))
 	filename := filepath.Join(os.TempDir(), "piuma_http_cache", base64.URLEncoding.EncodeToString(hash.Sum(nil)))
