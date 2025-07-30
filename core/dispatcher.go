@@ -82,10 +82,16 @@ func Dispatch(request *http.Request, response *http.Response, imageParameters *I
 	return asyncOptimize(response, imageParameters, newOptions)
 }
 
-func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string) (*http.Response, error) {
+func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string, unsafe bool) (*http.Response, error) {
 
 	image_domain := strings.Split(originalUrl, "/")[2]
 	domain_is_valid := false
+
+	if unsafe {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = true
+	} else {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = false
+	}
 
 	for _, domain := range allowed_domains {
 		if strings.HasPrefix(domain, "*") {

@@ -20,6 +20,7 @@ ENV HTTP_CACHE_TTL=3600
 ENV HTTP_CACHE_PURGE_INTERVAL=3600
 ENV WORKERS=4
 ENV DOMAINS=""
+ENV UNSAFE=false
 
 
 # Install all required tools
@@ -27,4 +28,4 @@ RUN apk add --update --no-cache optipng jpegoptim libwebp libstdc++ dssim libavi
 
 WORKDIR /root/
 COPY --from=build_piuma /app .
-ENTRYPOINT ./app -port ${PORT} -mediapath ${MEDIA_DIR} -timeout ${TIMEOUT} -httpCacheTTL ${HTTP_CACHE_TTL} -httpCachePurgeInterval ${HTTP_CACHE_PURGE_INTERVAL} -workers ${WORKERS} -domains "${DOMAINS}"
+ENTRYPOINT ./app -port ${PORT} -mediapath ${MEDIA_DIR} -timeout ${TIMEOUT} -httpCacheTTL ${HTTP_CACHE_TTL} -httpCachePurgeInterval ${HTTP_CACHE_PURGE_INTERVAL} -workers ${WORKERS} -domains "${DOMAINS}" -unsafe ${UNSAFE:-false}
