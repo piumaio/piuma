@@ -25,7 +25,6 @@ var workers int
 var version string
 var domains string
 var domains_list []string
-var unsafe bool
 
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
@@ -40,7 +39,7 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	if len(domains_list) == 0 {
 		domains_list = []string{r.Host}
 	}
-	image, err := core.DownloadImage(imageURL, httpCacheTTL, domains_list, unsafe)
+	image, err := core.DownloadImage(imageURL, httpCacheTTL, domains_list)
 	if err != nil {
 		writeError(w, *image, err)
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
@@ -127,7 +126,6 @@ func main() {
 	flag.IntVar(&httpCachePurgeInterval, "httpCachePurgeInterval", 3600, "Interval for deleting unused cache (in seconds)")
 	flag.IntVar(&workers, "workers", 4, "Number of workers to instantiate")
 	flag.StringVar(&domains, "domains", "", "Allowed domains, separated by commas (e.g. domain1.com,domain2.com)")
-	flag.BoolVar(&unsafe, "unsafe", false, "Allow SSL connections from untrusted sources")
 
 	flag.Parse()
 	log.Printf("Allowed domains: %s", domains)
