@@ -28,7 +28,11 @@ var domains_list []string
 
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
-	imageURL := ps.ByName("url")[1:]
+	rawURL := ps.ByName("url")
+	if len(rawURL) > 0 && rawURL[0] == '/' {
+		rawURL = rawURL[1:]
+	}
+	imageURL := rawURL
 	parameters := ps.ByName("parameters")
 
 	imageParameters, err := core.Parser(parameters)
@@ -41,7 +45,7 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 	image, err := core.DownloadImage(imageURL, httpCacheTTL, domains_list)
 	if err != nil {
-		writeError(w, *image, err)
+		writeError(w, image, err)
 		log.Printf("[ERROR]: error while downloading image [ %s ]\n", err)
 		return
 	}
@@ -56,28 +60,44 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	if err != nil {
-		contentType = image.Header.Get("Content-Type")
-		w.Header().Set("Content-Type", contentType) // <-- set the content-type header
-		io.Copy(w, image.Body)
+		if image != nil {
+			contentType = image.Header.Get("Content-Type")
+			w.Header().Set("Content-Type", contentType) // <-- set the content-type header
+			if image.Body != nil {
+				io.Copy(w, image.Body)
+			}
+		}
 	}
 
-	image.Body.Close()
+	if image != nil && image.Body != nil {
+		image.Body.Close()
+	}
 }
 
-func writeError(w http.ResponseWriter, r http.Response, err error) {
+func writeError(w http.ResponseWriter, r *http.Response, err error) {
 	var data = map[string]interface{}{
 		"error":  strings.ToUpper(err.Error()),
 		"detail": "",
 	}
-	if err.Error() == "invalid_status_code" {
+
+	switch err.Error() {
+	case "invalid_status_code":
 		w.WriteHeader(http.StatusNotFound)
-		data["detail"] = fmt.Sprintf("Original status code was: %d.", r.StatusCode)
-	} else if err.Error() == "invalid_content_type" {
+		if r != nil {
+			data["detail"] = fmt.Sprintf("Original status code was: %d.", r.StatusCode)
+		}
+	case "invalid_content_type":
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		data["detail"] = fmt.Sprintf("Original Content-Type was: %s.", r.Header.Get("Content-Type"))
-	} else if err.Error() == "invalid_domain" {
+		if r != nil {
+			data["detail"] = fmt.Sprintf("Original Content-Type was: %s.", r.Header.Get("Content-Type"))
+		}
+	case "invalid_domain":
 		w.WriteHeader(http.StatusForbidden)
-		data["detail"] = fmt.Sprintf("Images from domain %s are not allowed.", r.Request.URL.Host)
+		if r != nil && r.Request != nil && r.Request.URL != nil {
+			data["detail"] = fmt.Sprintf("Images from domain %s are not allowed.", r.Request.URL.Host)
+		}
+	default:
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
