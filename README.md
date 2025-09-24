@@ -2,8 +2,8 @@
 
 
 # Piuma    
-[![](https://images.microbadger.com/badges/version/piumaio/piuma.svg)](https://microbadger.com/images/piumaio/piuma "Get your own version badge on microbadger.com")
-[![Build Status](https://travis-ci.org/piumaio/piuma.svg?branch=master)](https://travis-ci.org/piumaio/piuma) [![Coverage Status](https://img.shields.io/codecov/c/github/piumaio/piuma.svg)](https://codecov.io/gh/piumaio/piuma)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/piumaio/piuma?style=flat-square&logo=go)![GitHub release (latest by date)](https://img.shields.io/github/v/release/piumaio/piuma?style=flat-square&logo=github)![GitHub](https://img.shields.io/github/license/piumaio/piuma?style=flat-square&logo=apache)![GitHub issues](https://img.shields.io/github/issues/piumaio/piuma?style=flat-square&logo=github)![GitHub pull requests](https://img.shields.io/github/issues-pr/piumaio/piuma?style=flat-square&logo=github)![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/piumaio/piuma/release.yml?style=flat-square&logo=hoppscotch)![Codecov](https://img.shields.io/codecov/c/github/piumaio/piuma?style=flat-square&logo=codecov&logoColor=white)
+
 
 
 Simple and fast image optimizer service you can host on your machine
