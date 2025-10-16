@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build-test:
+    name: 🔬 Run testsuite (unit + integration)
     runs-on: ubuntu-latest
     steps:
       - name: 📌 Checkout
