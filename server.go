@@ -147,25 +147,49 @@ func init() {
 // main bootstraps configuration (flags, paths, domain allow-list), starts
 // worker pool and HTTP cache purge loop, then serves HTTP traffic. On server
 // shutdown it ensures worker manager and purge goroutine terminate cleanly.
-func main() {
+// Config holds runtime settings parsed from flags.
+type Config struct {
+	Port                   string
+	MediaPath              string
+	Timeout                int
+	HTTPCacheTTL           int
+	HTTPCachePurgeInterval int
+	Workers                int
+	Domains                string
+}
+
+// parseConfig builds a Config from the provided argument slice (excluding program name).
+// It does not mutate global variables; Initialize applies Config to globals.
+func parseConfig(args []string) (Config, error) {
 	usr, err := user.Current()
 	if err != nil {
-		log.Printf("[ERROR]: failed getting user [ %s ]\n", err)
-		os.Exit(1)
+		return Config{}, fmt.Errorf("getting current user: %w", err)
 	}
+	fs := flag.NewFlagSet("piuma", flag.ContinueOnError)
+	fs.SetOutput(io.Discard) // silence in tests
+	cfg := Config{Port: "8080", MediaPath: filepath.Join(usr.HomeDir, ".piuma", "media"), Timeout: 0, HTTPCacheTTL: 3600, HTTPCachePurgeInterval: 3600, Workers: 4}
+	fs.StringVar(&cfg.Port, "port", cfg.Port, "Port where piuma will run")
+	fs.StringVar(&cfg.MediaPath, "mediapath", cfg.MediaPath, "Media path")
+	fs.IntVar(&cfg.Timeout, "timeout", cfg.Timeout, "Maximum time to wait for image elaboration (in seconds)")
+	fs.IntVar(&cfg.HTTPCacheTTL, "httpCacheTTL", cfg.HTTPCacheTTL, "Time To Live (in seconds) for HTTP Response Cache")
+	fs.IntVar(&cfg.HTTPCachePurgeInterval, "httpCachePurgeInterval", cfg.HTTPCachePurgeInterval, "Interval for deleting unused cache (in seconds)")
+	fs.IntVar(&cfg.Workers, "workers", cfg.Workers, "Number of workers to instantiate")
+	fs.StringVar(&cfg.Domains, "domains", "", "Allowed domains, separated by commas (e.g. domain1.com,domain2.com)")
+	if err := fs.Parse(args); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
+}
 
-	var port = "8080"
-
-	flag.StringVar(&port, "port", port, "Port where piuma will run")
-	flag.StringVar(&pathmedia, "mediapath", filepath.Join(usr.HomeDir, ".piuma", "media"), "Media path")
-	flag.IntVar(&timeout, "timeout", 0, "Maximum time to wait for image elaboration (in seconds)")
-	flag.IntVar(&httpCacheTTL, "httpCacheTTL", 3600, "Time To Live (in seconds) for HTTP Response Cache")
-	flag.IntVar(&httpCachePurgeInterval, "httpCachePurgeInterval", 3600, "Interval for deleting unused cache (in seconds)")
-	flag.IntVar(&workers, "workers", 4, "Number of workers to instantiate")
-	flag.StringVar(&domains, "domains", "", "Allowed domains, separated by commas (e.g. domain1.com,domain2.com)")
-
-	flag.Parse()
-	log.Printf("Allowed domains: %s", domains)
+// Initialize mutates global runtime settings, prepares directories, starts background
+// purge loop and workers, and returns the router plus a shutdown function.
+func Initialize(cfg Config) (*httprouter.Router, func(), error) {
+	pathmedia = cfg.MediaPath
+	timeout = cfg.Timeout
+	httpCacheTTL = cfg.HTTPCacheTTL
+	httpCachePurgeInterval = cfg.HTTPCachePurgeInterval
+	workers = cfg.Workers
+	domains = cfg.Domains
 
 	if domains == "" {
 		log.Printf("[WARNING]: No allowed domains specified, using the current domain")
@@ -173,12 +197,16 @@ func main() {
 	} else {
 		domains_list = strings.Split(domains, ",")
 	}
-
 	pathtemp = filepath.Join(pathmedia, "temp")
-
-	os.MkdirAll(pathtemp, os.ModePerm)
-	os.MkdirAll(pathmedia, os.ModePerm)
-	os.MkdirAll(filepath.Join(os.TempDir(), "piuma_http_cache"), os.ModePerm)
+	if err := os.MkdirAll(pathtemp, os.ModePerm); err != nil {
+		return nil, nil, err
+	}
+	if err := os.MkdirAll(pathmedia, os.ModePerm); err != nil {
+		return nil, nil, err
+	}
+	if err := os.MkdirAll(filepath.Join(os.TempDir(), "piuma_http_cache"), os.ModePerm); err != nil {
+		return nil, nil, err
+	}
 
 	router := httprouter.New()
 	router.GET("/", getInfo)
@@ -189,8 +217,31 @@ func main() {
 	for i := 0; i < workers || i < 1; i++ {
 		core.GlobalWorkerManager.Run()
 	}
-	err = http.ListenAndServe(":"+port, router)
-	core.GlobalWorkerManager.Close()
-	stopPurgeChan <- true
-	log.Fatal(err)
+	shutdown := func() {
+		core.GlobalWorkerManager.Close()
+		stopPurgeChan <- true
+	}
+	return router, shutdown, nil
+}
+
+// run wires together configuration parsing and initialization returning server error (if any).
+func run(args []string) error {
+	cfg, err := parseConfig(args)
+	if err != nil {
+		return err
+	}
+	router, shutdown, err := Initialize(cfg)
+	if err != nil {
+		return err
+	}
+	defer shutdown()
+	log.Printf("Allowed domains: %s", domains)
+	return http.ListenAndServe(":"+cfg.Port, router)
+}
+
+// main remains thin delegating to run for testability.
+func main() {
+	if err := run(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
 }
