@@ -26,7 +26,10 @@ jobs:
       - name: 📦 Install dependencies (system tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y optipng jpegoptim webp libavif-bin dssim
+          sudo apt-get install -y optipng jpegoptim webp libavif-bin
+          DISSIM_VERSION="3.2.3"
+          wget https://github.com/kornelski/dssim/releases/download/${DISSIM_VERSION}/dssim_${DISSIM_VERSION}_amd64.deb
+          sudo dpkg -i dssim_${DISSIM_VERSION}_amd64.deb
 
       - name: 🏗️ Go mod download
         run: go mod download
