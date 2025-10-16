@@ -22,10 +22,14 @@ jobs:
         with:
           go-version: "1.22.x"
 
-      - name: 📦 Install dependencies (system tools)
+      - name: 📦 Install system dependencies (tools)
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: optipng jpegoptim webp libavif-bin
+          version: 1.0
+
+      - name: 👽 Install external dependencies (dssim)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y optipng jpegoptim webp libavif-bin
           DISSIM_VERSION="3.2.3"
           wget https://github.com/kornelski/dssim/releases/download/${DISSIM_VERSION}/dssim_${DISSIM_VERSION}_amd64.deb
           sudo dpkg -i dssim_${DISSIM_VERSION}_amd64.deb
