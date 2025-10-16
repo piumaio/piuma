@@ -1,8 +1,6 @@
 name: 🧑‍🔬 Test & Coverage
 
 on:
-  push:
-    branches: [master, chore/testing]
   pull_request:
     branches: [master]
   workflow_dispatch:
