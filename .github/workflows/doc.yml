@@ -50,7 +50,7 @@ jobs:
           cache: 'pnpm'
 
       - name: 📦 Install dependencies (vuepress)
-        run: cd docs && pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 🔖 Move CHANGELOG into docs
         run: bash docs/.vuepress/moveCHANGELOG.sh
@@ -58,7 +58,7 @@ jobs:
       - name: 📚 Build docs
         env:
           NODE_OPTIONS: --max_old_space_size=8192
-        run: cd docs && pnpm run docs:build
+        run: pnpm run docs:build
 
       - name: 🌍 Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

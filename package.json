@@ -2,9 +2,9 @@
     "name": "piuma-docs",
     "private": true,
     "scripts": {
-        "docs:dev": "vuepress dev .",
-        "docs:build": "vuepress build .",
-        "docs:publish": "./.vuepress/publishDOCS.sh"
+        "docs:dev": "vuepress dev docs",
+        "docs:build": "vuepress build docs",
+        "docs:publish": "./docs/.vuepress/publishDOCS.sh"
     },
     "engines": {
         "node": ">=22",
