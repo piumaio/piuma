@@ -11,6 +11,9 @@ import (
 	"os/exec"
 )
 
+// seam for external jpegoptim invocation; overridden in tests to simulate success/failure without tool.
+var jpegoptimCmd = func(args ...string) *exec.Cmd { return exec.Command("jpegoptim", args...) }
+
 // JPEGHandler implements lossy JPEG encoding. After initial encode it runs
 // jpegoptim to enforce size/quality constraints (progressive, strip metadata).
 type JPEGHandler struct {
@@ -49,7 +52,7 @@ func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	file.Close()
 
 	args := []string{fmt.Sprintf("--max=%d", quality), "--all-progressive", "-s", "-o", file.Name()}
-	cmd := exec.Command("jpegoptim", args...)
+	cmd := jpegoptimCmd(args...)
 	err = cmd.Run()
 	if err != nil {
 		return errors.New("Jpegoptim command not working")

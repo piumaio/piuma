@@ -14,6 +14,9 @@ import (
 	"strings"
 )
 
+// seam for dssim invocation
+var dssimCmd = func(args ...string) *exec.Cmd { return exec.Command("dssim", args...) }
+
 // MaxIterations bounds the adaptive quality binary search steps to guarantee
 // predictable CPU usage. After MaxIterations we accept the last candidate.
 const MaxIterations = 4
@@ -87,7 +90,7 @@ func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	defer os.Remove(file2.Name())
 
 	args := []string{file1.Name(), file2.Name()}
-	dssimValue, err := exec.Command("dssim", args...).Output()
+	dssimValue, err := dssimCmd(args...).Output()
 	if err != nil {
 		return -1, errors.New("dssim command not working")
 	}
