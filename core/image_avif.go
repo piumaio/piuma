@@ -40,11 +40,12 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer avifFile.Close()
-	defer os.Remove(avifFile.Name())
+	defer func() {
+		avifFile.Close()
+		os.Remove(avifFile.Name())
+	}()
 
-	_, err = io.Copy(avifFile, reader)
-	if err != nil {
+	if _, err = io.Copy(avifFile, reader); err != nil {
 		return nil, err
 	}
 
@@ -52,16 +53,22 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pngFile.Close()
-	defer os.Remove(pngFile.Name())
+	defer func() {
+		pngFile.Close()
+		os.Remove(pngFile.Name())
+	}()
 
-	args := []string{"-q 100", avifFile.Name(), pngFile.Name()}
+	// avifdec syntax: avifdec input.avif output.png
+	args := []string{avifFile.Name(), pngFile.Name()}
 	cmd := avifdecCmd(args...)
-	err = cmd.Run()
-	if err != nil {
+	if err = cmd.Run(); err != nil {
 		return nil, errors.New("avifdec command not working")
 	}
 
+	// reset read pointer before decoding
+	if _, err = pngFile.Seek(0, 0); err != nil {
+		return nil, err
+	}
 	return png.Decode(pngFile)
 }
 
