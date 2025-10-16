@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.24" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme='dark'] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background-color: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const useChoice = localStorage.getItem('vuepress-color-scheme')
+      const systemStatus =
+        'matchMedia' in window
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : false
+
+      if (useChoice === 'light') {
+        document.documentElement.dataset.theme = 'light'
+      } else if (useChoice === 'dark' || systemStatus) {
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪶</text></svg>"><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css"><title>Piuma</title><meta name="description" content="High-performance adaptive image optimization server in Go">
+    <link rel="preload" href="/piuma/assets/style-5sWLBl2t.css" as="style"><link rel="stylesheet" href="/piuma/assets/style-5sWLBl2t.css">
+    <link rel="modulepreload" href="/piuma/assets/app-BZ4iH1GL.js"><link rel="modulepreload" href="/piuma/assets/404.html-CuDvcsTQ.js">
+    <link rel="prefetch" href="/piuma/assets/index.html-DsMqKdrT.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-BnY9wtWy.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-VvK7D1y3.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-9hEmcjOu.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-GIU4emep.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-C5kIqXql.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-k6QDBegT.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-D3jaJcs3.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-CCSVwgLc.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-DuPbqVpJ.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-kqERJTBV.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-CBK0ch_7.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-BVCFq6XC.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-D0WQk7k1.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-DHh_EBDS.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-BV1YIJvX.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-DvQs6sQC.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-D3nkIjgy.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-Csj59XTn.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-C3z5MOJs.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-DNHstxLP.js" as="script"><link rel="prefetch" href="/piuma/assets/index.html-DzbwOjYc.js" as="script">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="vp-theme-container" vp-container data-v-53611b70><main class="page" data-v-53611b70><div vp-content data-v-53611b70><h1 data-v-53611b70>404</h1><blockquote data-v-53611b70>There&#39;s nothing here.</blockquote><a class="route-link" href="/piuma/" data-v-53611b70>Take me home</a></div></main></div><!--[--><!----><!--]--><!--]--></div>
+    <script type="module" src="/piuma/assets/app-BZ4iH1GL.js" defer></script>
+  </body>
+</html>
