@@ -1,0 +1,17 @@
+:root {
+    --vp-c-accent: #1bb1f5;
+    --vp-c-accent-bg: #1bb1f5;
+    --vp-c-accent-hover: #189dda;
+    --vp-c-accent-soft: rgb(27 177 245 / 16%);
+}
+
+.vp-hero-action-button.secondary:hover {
+    // This fixes the hover color of the secondary button
+    background-color: var(--vp-c-accent-soft);
+    color: var(--vp-c-accent);
+}
+
+.vp-hero-image {
+    max-height: 160px;
+    margin: 12rem auto 6rem;
+}

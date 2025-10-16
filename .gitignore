@@ -1,3 +1,5 @@
+.DS_Store
+
 # Executeable
 piuma
 
@@ -7,6 +9,11 @@ media
 
 # Vendor
 vendor/*/
+
+docs/.vuepress/dist
+docs/.vuepress/.cache
+docs/.vuepress/.temp
+node_modules
 
 # Test coverage
 coverage.*
