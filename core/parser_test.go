@@ -65,6 +65,16 @@ func TestParser(t *testing.T) {
 			},
 		},
 		{
+			input: "100_0_80a:auto:webp,avif",
+			imageParameters: core.ImageParameters{
+				Width:           100,
+				Height:          0,
+				Quality:         80,
+				AdaptiveQuality: true,
+				Convert:         "auto:webp,avif",
+			},
+		},
+		{
 			input: "200_10_10a:jpeg",
 			imageParameters: core.ImageParameters{
 				Width:           200,
