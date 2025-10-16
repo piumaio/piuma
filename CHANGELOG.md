@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/piumaio/piuma/compare/v1.0.0...v1.0.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* **release:** release also an arm64 version ([cb627e7](https://github.com/piumaio/piuma/commit/cb627e72b9e818fd8a8d6f48a0e2711153916b27))
+
 # 1.0.0 (2025-09-24)
 
 

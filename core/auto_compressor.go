@@ -14,8 +14,18 @@ import (
 	"strings"
 )
 
+// seam for dssim invocation
+var dssimCmd = func(args ...string) *exec.Cmd { return exec.Command("dssim", args...) }
+
+// MaxIterations bounds the adaptive quality binary search steps to guarantee
+// predictable CPU usage. After MaxIterations we accept the last candidate.
 const MaxIterations = 4
 
+// CompressByDSSIM adaptively finds an encoding quality that keeps DSSIM value
+// (structural dissimilarity) below threshold using a bounded binary search.
+// threshold typically scales from requested quality (lower threshold -> better
+// visual fidelity). The handler's Encode/Decode are used to round-trip bytes.
+// Writes final encoded bytes to newImgFile.
 func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *ImageHandler, threshold float64) error {
 	startQuality := 0
 	endQuality := 100
@@ -68,6 +78,9 @@ func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *Image
 	return nil
 }
 
+// getDSSIMValue produces a DSSIM score invoking the external `dssim` tool on
+// two temporary PNG files: original (file1) and the candidate image (image2).
+// Returns parsed float or error if tool invocation fails.
 func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	file2, err := createTempPNG(image2)
 	if err != nil {
@@ -77,7 +90,7 @@ func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	defer os.Remove(file2.Name())
 
 	args := []string{file1.Name(), file2.Name()}
-	dssimValue, err := exec.Command("dssim", args...).Output()
+	dssimValue, err := dssimCmd(args...).Output()
 	if err != nil {
 		return -1, errors.New("dssim command not working")
 	}
@@ -85,6 +98,9 @@ func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	return strconv.ParseFloat(strings.Split(string(dssimValue), "\t")[0], 64)
 }
 
+// createTempPNG encodes an image to a temporary PNG file for external tool
+// analysis. Caller must remove the file. Returns file handle positioned at end
+// (decoder tools reopen). Used by DSSIM evaluation.
 func createTempPNG(image *image.Image) (*os.File, error) {
 	file, err := ioutil.TempFile("", "dssim_image")
 	if err != nil {

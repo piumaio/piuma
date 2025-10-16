@@ -11,6 +11,12 @@ import (
 	"os/exec"
 )
 
+// seams for external avif tools
+var avifencCmd = func(args ...string) *exec.Cmd { return exec.Command("avifenc", args...) }
+var avifdecCmd = func(args ...string) *exec.Cmd { return exec.Command("avifdec", args...) }
+
+// AvifHandler performs AVIF encoding/decoding via external CLI tools (avifenc,
+// avifdec). PNG is used as an intermediate representation.
 type AvifHandler struct {
 	ImageHandler
 }
@@ -27,16 +33,19 @@ func (a *AvifHandler) SupportsTransparency() bool {
 	return true
 }
 
+// Decode converts AVIF bytes into PNG using avifdec, then decodes PNG. Returns
+// error if external tool invocation fails.
 func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	avifFile, err := ioutil.TempFile("", "dec_image*.avif")
 	if err != nil {
 		return nil, err
 	}
-	defer avifFile.Close()
-	defer os.Remove(avifFile.Name())
+	defer func() {
+		avifFile.Close()
+		os.Remove(avifFile.Name())
+	}()
 
-	_, err = io.Copy(avifFile, reader)
-	if err != nil {
+	if _, err = io.Copy(avifFile, reader); err != nil {
 		return nil, err
 	}
 
@@ -44,19 +53,28 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pngFile.Close()
-	defer os.Remove(pngFile.Name())
+	defer func() {
+		pngFile.Close()
+		os.Remove(pngFile.Name())
+	}()
 
-	args := []string{"-q 100", avifFile.Name(), pngFile.Name()}
-	cmd := exec.Command("avifdec", args...)
-	err = cmd.Run()
-	if err != nil {
+	// avifdec syntax: avifdec input.avif output.png
+	args := []string{avifFile.Name(), pngFile.Name()}
+	cmd := avifdecCmd(args...)
+	if err = cmd.Run(); err != nil {
 		return nil, errors.New("avifdec command not working")
 	}
 
+	// reset read pointer before decoding
+	if _, err = pngFile.Seek(0, 0); err != nil {
+		return nil, err
+	}
 	return png.Decode(pngFile)
 }
 
+// Encode writes AVIF by first encoding to PNG then invoking avifenc with a
+// mapped quality value (AVIF quality scale differs: we derive min/max). Alpha
+// quality matches luma quality.
 func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
 	pngFile, err := ioutil.TempFile("", "enc_image*.png")
 	if err != nil {
@@ -80,7 +98,7 @@ func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	quality = (100 - quality) * 63 / 100
 
 	args := []string{"--min", fmt.Sprint(quality), "--max", fmt.Sprint(quality), "--minalpha", fmt.Sprint(quality), "--maxalpha", fmt.Sprint(quality), pngFile.Name(), avifFile.Name()}
-	cmd := exec.Command("avifenc", args...)
+	cmd := avifencCmd(args...)
 	err = cmd.Run()
 	if err != nil {
 		return errors.New("avifenc command not working")
