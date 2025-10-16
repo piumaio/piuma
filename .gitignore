@@ -7,3 +7,6 @@ media
 
 # Vendor
 vendor/*/
+
+# Test coverage
+coverage.*

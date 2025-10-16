@@ -10,6 +10,8 @@ import (
 	"os/exec"
 )
 
+// PNGHandler implements ImageHandler using the stdlib PNG encoder plus a pass
+// through the external optipng binary for further lossless compression.
 type PNGHandler struct {
 	ImageHandler
 }
@@ -30,6 +32,8 @@ func (p *PNGHandler) Decode(reader io.Reader) (image.Image, error) {
 	return png.Decode(reader)
 }
 
+// Encode writes a compressed PNG using optipng for optimization. Quality is
+// ignored (PNG is lossless); the parameter is accepted for interface parity.
 func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
 	file, err := ioutil.TempFile("", "png_image")
 	if err != nil {

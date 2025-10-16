@@ -1,0 +1,62 @@
+name: 🧑‍🔬 Test & Coverage
+
+on:
+  push:
+    branches: [master, chore/testing]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📌 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🦺 Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+
+      - name: 📦 Install dependencies (system tools)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y optipng jpegoptim webp libavif-bin
+          DISSIM_VERSION="3.2.3"
+          wget https://github.com/kornelski/dssim/releases/download/${DISSIM_VERSION}/dssim_${DISSIM_VERSION}_amd64.deb
+          sudo dpkg -i dssim_${DISSIM_VERSION}_amd64.deb
+
+      - name: 🏗️ Go mod download
+        run: go mod download
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          go test ./... -coverprofile=coverage.out
+          go tool cover -func=coverage.out > coverage.txt
+
+      - name: 📤 Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-files
+          path: |
+            coverage.out
+            coverage.txt
+
+      - name: 🏖️ Codecov upload
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: 📝 Annotate PR with summary
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "Coverage Summary:" >> $GITHUB_STEP_SUMMARY
+          cat coverage.txt >> $GITHUB_STEP_SUMMARY
