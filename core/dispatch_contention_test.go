@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/chai2010/webp"
 	"github.com/piumaio/piuma/core"
@@ -32,7 +33,16 @@ func TestDispatchContention(t *testing.T) {
 	params, _ := core.Parser("0_0_80")
 	opts := &core.Options{PathTemp: temp, PathMedia: media, Timeout: 10}
 
+	// Inject latency so both goroutines race on the same FileMutex entry.
+	originalOptimize := core.OptimizeFunc
+	core.OptimizeFunc = func(r *http.Response, ip *core.ImageParameters, o *core.Options) (string, string, error) {
+		time.Sleep(20 * time.Millisecond)
+		return originalOptimize(r, ip, o)
+	}
+	defer func() { core.OptimizeFunc = originalOptimize }()
+
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 	var firstErr error
 	for i := 0; i < 2; i++ {
 		wg.Add(1)
@@ -40,7 +50,7 @@ func TestDispatchContention(t *testing.T) {
 			defer wg.Done()
 			_, _, err := core.Dispatch(&http.Request{}, resp, &params, opts)
 			if err != nil && err.Error() == "Still elaborating" {
-				firstErr = err
+				mu.Lock(); firstErr = err; mu.Unlock()
 			}
 		}()
 	}

@@ -12,6 +12,11 @@ import (
 // to queue optimization jobs. Created in main() and shut down on server exit.
 var GlobalWorkerManager *WorkerManager
 
+// OptimizeFunc is an overridable seam used by tests to inject latency or
+// faults into the optimization pipeline for deterministic concurrency
+// behaviors. Defaults to Optimize.
+var OptimizeFunc = Optimize
+
 // output represents the result of an optimization job returned over a channel.
 // When err != nil path/mime may be empty. Channel will be closed after send.
 type output struct {
@@ -99,7 +104,7 @@ func (w *WorkerManager) Run() {
 				w.waitGroup.Done()
 				return
 			case req := <-w.data:
-				path, mime, err := Optimize(req.response, req.imageParameters, req.options)
+				path, mime, err := OptimizeFunc(req.response, req.imageParameters, req.options)
 				FileMutex.Delete(req.options.PathTemp)
 				req.result <- output{path, mime, err}
 				close(req.result)
@@ -117,7 +122,9 @@ func (w *WorkerManager) Run() {
 // Close signals workers to terminate and waits until all have exited.
 // Subsequent Dispatch calls will return nil.
 func (w *WorkerManager) Close() {
-	// Closing the channel allows all workers to receive the close signal instead of just one.
-	close(w.close)
-	w.waitGroup.Wait()
+	if !w.closed {
+		close(w.close)
+		w.closed = true
+		w.waitGroup.Wait()
+	}
 }
