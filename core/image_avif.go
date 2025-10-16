@@ -11,6 +11,8 @@ import (
 	"os/exec"
 )
 
+// AvifHandler performs AVIF encoding/decoding via external CLI tools (avifenc,
+// avifdec). PNG is used as an intermediate representation.
 type AvifHandler struct {
 	ImageHandler
 }
@@ -27,6 +29,8 @@ func (a *AvifHandler) SupportsTransparency() bool {
 	return true
 }
 
+// Decode converts AVIF bytes into PNG using avifdec, then decodes PNG. Returns
+// error if external tool invocation fails.
 func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	avifFile, err := ioutil.TempFile("", "dec_image*.avif")
 	if err != nil {
@@ -57,6 +61,9 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 	return png.Decode(pngFile)
 }
 
+// Encode writes AVIF by first encoding to PNG then invoking avifenc with a
+// mapped quality value (AVIF quality scale differs: we derive min/max). Alpha
+// quality matches luma quality.
 func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
 	pngFile, err := ioutil.TempFile("", "enc_image*.png")
 	if err != nil {

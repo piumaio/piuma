@@ -12,6 +12,8 @@ import (
 	"github.com/elnormous/contenttype"
 )
 
+// imageHandlers maps MIME types to their concrete handlers for decoding and
+// encoding. Used for Content-Type based resolution.
 var imageHandlers = map[string]ImageHandler{
 	"image/jpeg": &JPEGHandler{},
 	"image/png":  &PNGHandler{},
@@ -19,6 +21,8 @@ var imageHandlers = map[string]ImageHandler{
 	"image/avif": &AvifHandler{},
 }
 
+// imageHandlersbyExtension maps short extension tokens (parse Convert input)
+// to handlers. Includes distinct lossless WebP option.
 var imageHandlersbyExtension = map[string]ImageHandler{
 	"jpeg":          &JPEGHandler{},
 	"jpg":           &JPEGHandler{},
@@ -28,6 +32,15 @@ var imageHandlersbyExtension = map[string]ImageHandler{
 	"avif":          &AvifHandler{},
 }
 
+// ImageHandler abstracts format-specific operations. Implementations should:
+//
+//	ImageType()          -> return canonical MIME type
+//	ImageExtension()     -> short token used in Convert directives
+//	SupportsTransparency() -> whether alpha channel can be preserved
+//	Decode(io.Reader)    -> produce image.Image from encoded bytes
+//	Encode(io.Writer, image.Image, quality) -> write encoded bytes
+//
+// Quality meaning depends on encoder (lossless handlers may ignore it).
 type ImageHandler interface {
 	ImageType() string
 	ImageExtension() string
@@ -36,6 +49,8 @@ type ImageHandler interface {
 	Encode(newImgFile io.Writer, newImage image.Image, quality uint) error
 }
 
+// NewImageHandler returns a handler based on MIME Content-Type string.
+// Returns error if unsupported.
 func NewImageHandler(imageType string) (ImageHandler, error) {
 	if handler, ok := imageHandlers[imageType]; ok {
 		return handler, nil
@@ -43,6 +58,8 @@ func NewImageHandler(imageType string) (ImageHandler, error) {
 	return nil, errors.New("Unsupported Image type")
 }
 
+// NewImageHandlerByExtension returns a handler mapped from Convert extension
+// token (e.g. "webp", "avif", "webp_lossless"). Returns error if unsupported.
 func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
 	if handler, ok := imageHandlersbyExtension[extension]; ok {
 		return handler, nil
@@ -50,6 +67,9 @@ func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
 	return nil, errors.New("Unsupported Extension")
 }
 
+// NewImageHandlerByBytes inspects the first 512 bytes of a file and attempts
+// to detect its Content-Type. Special-cases AVIF which may appear as
+// application/octet-stream and inspects magic bytes. Returns error if unknown.
 func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	firstBytes := make([]byte, 512)
 	_, err := buffer.Read(firstBytes)
@@ -59,7 +79,7 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	contentType := http.DetectContentType(firstBytes)
 
 	if contentType == "application/octet-stream" {
-		if bytes.Compare(firstBytes[8:12], []byte("avif")) == 0 {
+		if bytes.Equal(firstBytes[8:12], []byte("avif")) {
 			return &AvifHandler{}, nil
 		}
 		return nil, errors.New("Unsupported Extension")
@@ -68,6 +88,11 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	}
 }
 
+// AutoImageHandler performs dynamic format negotiation based on the client's
+// Accept header and a persisted set of available media types on disk (gob
+// file). The persisted list allows pruning of poor-performing formats over
+// time. preferredConverts optionally restricts candidate formats (result of
+// "auto:..." directive). Returns the chosen handler or error.
 func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response, autoConfPath string, preferredConverts []string) (ImageHandler, error) {
 	imageHandler, err := NewImageHandler(imageResponse.Header.Get("Content-Type"))
 	if err != nil {
@@ -128,6 +153,8 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response,
 	return imageHandler, nil
 }
 
+// RemoveImageHandlerFromAutoConf rewrites the gob file at autoConfPath
+// removing the specified imageType from future auto negotiation.
 func RemoveImageHandlerFromAutoConf(autoConfPath string, imageType string) error {
 	var availableMediaTypes []contenttype.MediaType
 	var err error
@@ -156,10 +183,12 @@ func RemoveImageHandlerFromAutoConf(autoConfPath string, imageType string) error
 	return err
 }
 
+// GetAllImageHandlers exposes internal MIME map (read-only usage intended).
 func GetAllImageHandlers() map[string]ImageHandler {
 	return imageHandlers
 }
 
+// GetAllImageHandlersByExtension returns the extension-based handler map.
 func GetAllImageHandlersByExtension() map[string]ImageHandler {
 	return imageHandlersbyExtension
 }

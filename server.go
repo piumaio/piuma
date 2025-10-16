@@ -26,6 +26,15 @@ var version string
 var domains string
 var domains_list []string
 
+// processImage is the main request handler for transformation requests.
+// Route pattern: /:parameters/*url where :parameters encodes ImageParameters
+// (see core.Parser) and *url is the upstream image URL to fetch. It performs:
+//   - parameter parsing
+//   - remote download (with domain allow-list and cache)
+//   - async optimization dispatch
+//   - response streaming or graceful fallback
+//
+// Errors during optimization fall back to original image when available.
 func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var contentType string
 	rawURL := ps.ByName("url")
@@ -50,7 +59,7 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
-	img, contentType, err := core.Dispatch(r, image, &imageParameters, &core.Options{pathtemp, pathmedia, timeout})
+	img, contentType, err := core.Dispatch(r, image, &imageParameters, &core.Options{PathTemp: pathtemp, PathMedia: pathmedia, Timeout: timeout})
 	if err != nil {
 		if err.Error() != "Timed out" {
 			fmt.Printf("[ERROR]: optimizing image [ %s ]\n", err)
@@ -74,6 +83,9 @@ func processImage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 }
 
+// writeError converts internal sentinel errors into structured JSON responses
+// with appropriate HTTP status codes. If the original upstream response is
+// available its status/content-type may be surfaced for debugging.
 func writeError(w http.ResponseWriter, r *http.Response, err error) {
 	var data = map[string]interface{}{
 		"error":  strings.ToUpper(err.Error()),
@@ -103,6 +115,8 @@ func writeError(w http.ResponseWriter, r *http.Response, err error) {
 	json.NewEncoder(w).Encode(data)
 }
 
+// getInfo returns basic service metadata: supported extensions and version.
+// It also handles CORS pre-flight OPTIONS requests.
 func getInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -130,6 +144,9 @@ func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime | log.Lmicroseconds)
 }
 
+// main bootstraps configuration (flags, paths, domain allow-list), starts
+// worker pool and HTTP cache purge loop, then serves HTTP traffic. On server
+// shutdown it ensures worker manager and purge goroutine terminate cleanly.
 func main() {
 	usr, err := user.Current()
 	if err != nil {
