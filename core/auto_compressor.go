@@ -32,7 +32,7 @@ func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *Image
 
 	originalFile, err := createTempPNG(original)
 	if err != nil {
-		return errors.New("Cannot create temp images for dssim")
+		return errors.New("cannot create temp images for dssim")
 	}
 	defer os.Remove(originalFile.Name())
 	defer originalFile.Close()
@@ -83,7 +83,7 @@ func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *Image
 func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	file2, err := createTempPNG(image2)
 	if err != nil {
-		return -1, errors.New("Cannot create temp images for dssim")
+		return -1, errors.New("cannot create temp images for dssim")
 	}
 	defer file2.Close()
 	defer os.Remove(file2.Name())
