@@ -17,14 +17,6 @@ import (
 	"time"
 )
 
-// OptimizationResult holds the path to the optimized image, its mime type and
-// any error produced during processing. (Currently unused; retained for future
-// synchronous API refactors.)
-type OptimizationResult struct {
-	image_path, mime_type string
-	err                   error
-}
-
 // Options bundles runtime paths and timeout controls for processing:
 //
 //	PathTemp  -> temporary file containing unoptimized original bytes
