@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
@@ -35,7 +34,7 @@ func (p *PNGHandler) Decode(reader io.Reader) (image.Image, error) {
 // Encode writes a compressed PNG using optipng for optimization. Quality is
 // ignored (PNG is lossless); the parameter is accepted for interface parity.
 func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
-	file, err := ioutil.TempFile("", "png_image")
+	file, err := os.CreateTemp("", "png_image")
 	if err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 	cmd := exec.Command("optipng", args...)
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("OptiPNG command not working")
+		return errors.New("optipng command not working")
 	}
 
 	file, err = os.Open(file.Name())

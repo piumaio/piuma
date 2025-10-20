@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
@@ -36,7 +35,7 @@ func (a *AvifHandler) SupportsTransparency() bool {
 // Decode converts AVIF bytes into PNG using avifdec, then decodes PNG. Returns
 // error if external tool invocation fails.
 func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
-	avifFile, err := ioutil.TempFile("", "dec_image*.avif")
+	avifFile, err := os.CreateTemp("", "dec_image*.avif")
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +48,7 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 		return nil, err
 	}
 
-	pngFile, err := ioutil.TempFile("", "dec_image*.png")
+	pngFile, err := os.CreateTemp("", "dec_image*.png")
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (a *AvifHandler) Decode(reader io.Reader) (image.Image, error) {
 // mapped quality value (AVIF quality scale differs: we derive min/max). Alpha
 // quality matches luma quality.
 func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
-	pngFile, err := ioutil.TempFile("", "enc_image*.png")
+	pngFile, err := os.CreateTemp("", "enc_image*.png")
 	if err != nil {
 		return err
 	}
@@ -88,7 +87,7 @@ func (a *AvifHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 		return err
 	}
 
-	avifFile, err := ioutil.TempFile("", "enc_image*.avif")
+	avifFile, err := os.CreateTemp("", "enc_image*.avif")
 	if err != nil {
 		return err
 	}

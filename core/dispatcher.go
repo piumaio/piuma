@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,14 +16,6 @@ import (
 	"sync"
 	"time"
 )
-
-// OptimizationResult holds the path to the optimized image, its mime type and
-// any error produced during processing. (Currently unused; retained for future
-// synchronous API refactors.)
-type OptimizationResult struct {
-	image_path, mime_type string
-	err                   error
-}
 
 // Options bundles runtime paths and timeout controls for processing:
 //
@@ -79,7 +70,7 @@ func Dispatch(request *http.Request, response *http.Response, imageParameters *I
 	}
 
 	if _, loaded := FileMutex.LoadOrStore(newImageTempPath, true); loaded {
-		return "", "", errors.New("Still elaborating")
+		return "", "", errors.New("still elaborating")
 	} else {
 		img, err := os.Create(newImageTempPath)
 		if err != nil {
@@ -159,7 +150,7 @@ func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string)
 
 	response, err := http.Get(originalUrl)
 	if err != nil {
-		return nil, errors.New("Error downloading file " + originalUrl)
+		return nil, errors.New("error downloading file " + originalUrl)
 	}
 	if response.StatusCode != 200 {
 		return response, errors.New("invalid_status_code")
@@ -173,7 +164,7 @@ func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string)
 	if err != nil {
 		return response, nil
 	}
-	err = ioutil.WriteFile(filename, cacheData, 0644)
+	err = os.WriteFile(filename, cacheData, 0644)
 	if err != nil {
 		return response, nil
 	}

@@ -1,7 +1,6 @@
 package core_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +14,7 @@ func TestStartHttpCachePurge(t *testing.T) {
 	// Prepare fake cached file entry
 	tmpDir := t.TempDir()
 	cacheFile := filepath.Join(tmpDir, "fake_cache")
-	ioutil.WriteFile(cacheFile, []byte("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n\r\n"), 0o644)
+	os.WriteFile(cacheFile, []byte("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n\r\n"), 0o644)
 	core.HttpCacheMutex.Store(cacheFile, time.Now().Unix()-1) // expired
 
 	quit := core.StartHttpCachePurge(1)

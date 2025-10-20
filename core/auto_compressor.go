@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -33,7 +32,7 @@ func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *Image
 
 	originalFile, err := createTempPNG(original)
 	if err != nil {
-		return errors.New("Cannot create temp images for dssim")
+		return errors.New("cannot create temp images for dssim")
 	}
 	defer os.Remove(originalFile.Name())
 	defer originalFile.Close()
@@ -84,7 +83,7 @@ func CompressByDSSIM(original *image.Image, newImgFile io.Writer, handler *Image
 func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 	file2, err := createTempPNG(image2)
 	if err != nil {
-		return -1, errors.New("Cannot create temp images for dssim")
+		return -1, errors.New("cannot create temp images for dssim")
 	}
 	defer file2.Close()
 	defer os.Remove(file2.Name())
@@ -102,7 +101,7 @@ func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 // analysis. Caller must remove the file. Returns file handle positioned at end
 // (decoder tools reopen). Used by DSSIM evaluation.
 func createTempPNG(image *image.Image) (*os.File, error) {
-	file, err := ioutil.TempFile("", "dssim_image")
+	file, err := os.CreateTemp("", "dssim_image")
 	if err != nil {
 		return nil, err
 	}

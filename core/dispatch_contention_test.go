@@ -49,7 +49,7 @@ func TestDispatchContention(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			_, _, err := core.Dispatch(&http.Request{}, resp, &params, opts)
-			if err != nil && err.Error() == "Still elaborating" {
+			if err != nil && err.Error() == "still elaborating" {
 				mu.Lock()
 				firstErr = err
 				mu.Unlock()
