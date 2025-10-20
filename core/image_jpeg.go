@@ -54,7 +54,7 @@ func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality
 	cmd := jpegoptimCmd(args...)
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("Jpegoptim command not working")
+		return errors.New("jpegoptim command not working")
 	}
 
 	file, err = os.Open(file.Name())

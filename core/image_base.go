@@ -55,7 +55,7 @@ func NewImageHandler(imageType string) (ImageHandler, error) {
 	if handler, ok := imageHandlers[imageType]; ok {
 		return handler, nil
 	}
-	return nil, errors.New("Unsupported Image type")
+	return nil, errors.New("unsupported image type")
 }
 
 // NewImageHandlerByExtension returns a handler mapped from Convert extension
@@ -64,7 +64,7 @@ func NewImageHandlerByExtension(extension string) (ImageHandler, error) {
 	if handler, ok := imageHandlersbyExtension[extension]; ok {
 		return handler, nil
 	}
-	return nil, errors.New("Unsupported Extension")
+	return nil, errors.New("unsupported extension")
 }
 
 // NewImageHandlerByBytes inspects the first 512 bytes of a file and attempts
@@ -74,7 +74,7 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 	firstBytes := make([]byte, 512)
 	_, err := buffer.Read(firstBytes)
 	if err != nil {
-		return nil, errors.New("Unsupported Extension")
+		return nil, errors.New("unsupported extension")
 	}
 	contentType := http.DetectContentType(firstBytes)
 
@@ -82,7 +82,7 @@ func NewImageHandlerByBytes(buffer io.Reader) (ImageHandler, error) {
 		if bytes.Equal(firstBytes[8:12], []byte("avif")) {
 			return &AvifHandler{}, nil
 		}
-		return nil, errors.New("Unsupported Extension")
+		return nil, errors.New("unsupported extension")
 	} else {
 		return NewImageHandler(contentType)
 	}
@@ -143,7 +143,7 @@ func AutoImageHandler(clientRequest *http.Request, imageResponse *http.Response,
 
 	accepted, _, err := contenttype.GetAcceptableMediaType(clientRequest, availableMediaTypes)
 	if err != nil {
-		return nil, errors.New("Error while trying to parse Accept header")
+		return nil, errors.New("error while trying to parse accept header")
 	}
 	imageHandler, err = NewImageHandler(accepted.String())
 	if err != nil {

@@ -50,7 +50,7 @@ func (p *PNGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality 
 	cmd := exec.Command("optipng", args...)
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("OptiPNG command not working")
+		return errors.New("optipng command not working")
 	}
 
 	file, err = os.Open(file.Name())
