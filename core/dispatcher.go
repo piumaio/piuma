@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -173,7 +172,7 @@ func DownloadImage(originalUrl string, cacheDelay int, allowed_domains []string)
 	if err != nil {
 		return response, nil
 	}
-	err = ioutil.WriteFile(filename, cacheData, 0644)
+	err = os.WriteFile(filename, cacheData, 0644)
 	if err != nil {
 		return response, nil
 	}

@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
@@ -39,7 +38,7 @@ func (j *JPEGHandler) Decode(reader io.Reader) (image.Image, error) {
 // Encode writes a JPEG with the requested quality (0-100) then invokes
 // jpegoptim to perform further compression. Returns error if jpegoptim fails.
 func (j *JPEGHandler) Encode(newImgFile io.Writer, newImage image.Image, quality uint) error {
-	file, err := ioutil.TempFile("", "jpeg_image")
+	file, err := os.CreateTemp("", "jpeg_image")
 	if err != nil {
 		return err
 	}

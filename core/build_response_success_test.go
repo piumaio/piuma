@@ -1,7 +1,6 @@
 package core_test
 
 import (
-	"io/ioutil"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestBuildResponseSuccess(t *testing.T) {
-	tmpFile, err := ioutil.TempFile("", "brs*")
+	tmpFile, err := os.CreateTemp("", "brs*")
 	if err != nil {
 		t.Fatalf("temp file error: %v", err)
 	}

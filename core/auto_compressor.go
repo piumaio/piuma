@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -102,7 +101,7 @@ func getDSSIMValue(file1 *os.File, image2 *image.Image) (float64, error) {
 // analysis. Caller must remove the file. Returns file handle positioned at end
 // (decoder tools reopen). Used by DSSIM evaluation.
 func createTempPNG(image *image.Image) (*os.File, error) {
-	file, err := ioutil.TempFile("", "dssim_image")
+	file, err := os.CreateTemp("", "dssim_image")
 	if err != nil {
 		return nil, err
 	}
